@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 30, 2026 at 06:13 AM
+-- Generation Time: Apr 04, 2026 at 11:42 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.4.16
 
@@ -18,8 +18,30 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `restaurant_db`
+-- Database: `store_management_db`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `brands`
+--
+
+CREATE TABLE `brands` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `image` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `brands`
+--
+
+INSERT INTO `brands` (`id`, `name`, `slug`, `image`, `created_at`, `updated_at`) VALUES
+(8, 'Blair Page', 'blair-page', 'uploads/brands/1775288080.jpg', '2026-04-04 07:34:40', '2026-04-04 07:34:40');
 
 -- --------------------------------------------------------
 
@@ -76,6 +98,29 @@ CREATE TABLE `cache_locks` (
   `owner` varchar(255) NOT NULL,
   `expiration` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `categories`
+--
+
+CREATE TABLE `categories` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `image` varchar(255) DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `categories`
+--
+
+INSERT INTO `categories` (`id`, `title`, `slug`, `image`, `status`, `created_at`, `updated_at`) VALUES
+(10, 'Test', 'test', '1775285111_Screenshot_2.jpg', 1, '2026-04-04 06:45:11', '2026-04-04 06:45:11');
 
 -- --------------------------------------------------------
 
@@ -285,7 +330,11 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (20, '2026_03_28_161315_add_sub_district_id_to_leads', 4),
 (21, '2026_03_28_162737_add_collector_id_to_leads_table', 5),
 (22, '2026_03_29_105200_add_status_updated_at_to_leads_table', 6),
-(23, '2026_03_29_163236_add_followup_status_to_leads_table', 7);
+(23, '2026_03_29_163236_add_followup_status_to_leads_table', 7),
+(24, '2026_04_04_125318_create_brands_table', 8),
+(25, '2026_04_04_135502_create_products_table', 9),
+(26, '2026_04_04_151933_create_stocks_table', 10),
+(27, '2026_04_04_162920_create_stocks_table', 11);
 
 -- --------------------------------------------------------
 
@@ -343,6 +392,32 @@ INSERT INTO `privileges` (`id`, `user_id`, `module`, `actions`, `created_at`, `u
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `products`
+--
+
+CREATE TABLE `products` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `category_id` bigint(20) UNSIGNED NOT NULL,
+  `brand_id` bigint(20) UNSIGNED NOT NULL,
+  `product_price` decimal(10,2) NOT NULL,
+  `sale_price` decimal(10,2) DEFAULT NULL,
+  `unit` varchar(255) DEFAULT NULL,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `products`
+--
+
+INSERT INTO `products` (`id`, `name`, `category_id`, `brand_id`, `product_price`, `sale_price`, `unit`, `status`, `created_at`, `updated_at`) VALUES
+(5, 'Al Hasan Toufik', 10, 8, 300.00, 350.00, 'piece', 'active', '2026-04-04 09:26:11', '2026-04-04 09:26:11');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `sessions`
 --
 
@@ -360,8 +435,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('0u60z76aydArrm3ToiqkPyiU8ka2Zhz1m6L569F7', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiOGZ0bnVycDFSMFlUR0NCdjhxSlN4UjF6RUt3dlNrOU9Pcjl3ZG1iZCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9sb2dpbiI7czo1OiJyb3V0ZSI7czo1OiJsb2dpbiI7fX0=', 1774851126),
-('XKh4NyoLrEIDjA9Vk7QJa74s5GPxdnWeIysK2FBV', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiVXltWDFjVWVGdjJIVW1kYUR4MnlxdGRxZ3J1TU4xNmExZkdBZXZqYyI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9sb2dpbiI7czo1OiJyb3V0ZSI7czo1OiJsb2dpbiI7fX0=', 1774849464);
+('1wgXBHnMX2Rd7nbzKFiBuTNvVv40074f7e2AEO5z', 8, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoibFRXMU9qWGlzeG1EY3pxcGlJb2xld0xrVndvVXhjZlp0cUVVY1FSQiI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDA6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbi9hZG1pbi9zdG9ja3MiO3M6NToicm91dGUiO3M6MTI6InN0b2Nrcy5pbmRleCI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjg7fQ==', 1775301956);
 
 -- --------------------------------------------------------
 
@@ -433,6 +507,35 @@ INSERT INTO `social_media` (`id`, `social_media`, `profile_link`, `created_at`, 
 (2, 'twitter', 'https://x.com/?lang=en', '2025-12-10 12:23:02', NULL, NULL),
 (3, 'linkedin', 'https://bd.linkedin.com/', '2025-12-10 12:23:02', NULL, NULL),
 (4, 'instagram', 'https://www.instagram.com/', '2025-12-10 12:23:02', NULL, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `stocks`
+--
+
+CREATE TABLE `stocks` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `product_id` bigint(20) UNSIGNED NOT NULL,
+  `quantity` int(10) UNSIGNED NOT NULL,
+  `stock_type` enum('in','out') NOT NULL DEFAULT 'in',
+  `note` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `stocks`
+--
+
+INSERT INTO `stocks` (`id`, `product_id`, `quantity`, `stock_type`, `note`, `created_at`, `updated_at`) VALUES
+(1, 5, 1000, 'in', 'none', '2026-04-04 10:30:08', '2026-04-04 10:30:08'),
+(2, 5, 1000, 'out', 'done', '2026-04-04 10:48:23', '2026-04-04 10:48:23'),
+(3, 5, 100, 'in', 'note', '2026-04-04 10:52:20', '2026-04-04 10:52:20'),
+(4, 5, 99, 'out', 'hhhh', '2026-04-04 10:52:32', '2026-04-04 10:52:32'),
+(5, 5, 1, 'out', 'jkjk', '2026-04-04 10:52:42', '2026-04-04 10:52:42'),
+(6, 5, 100, 'in', 'note', '2026-04-04 10:55:40', '2026-04-04 10:55:40'),
+(7, 5, 99, 'out', 'fbvfgfgbf', '2026-04-04 10:56:03', '2026-04-04 10:56:03');
 
 -- --------------------------------------------------------
 
@@ -1006,6 +1109,13 @@ INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `ro
 --
 
 --
+-- Indexes for table `brands`
+--
+ALTER TABLE `brands`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `brands_slug_unique` (`slug`);
+
+--
 -- Indexes for table `cache`
 --
 ALTER TABLE `cache`
@@ -1016,6 +1126,13 @@ ALTER TABLE `cache`
 --
 ALTER TABLE `cache_locks`
   ADD PRIMARY KEY (`key`);
+
+--
+-- Indexes for table `categories`
+--
+ALTER TABLE `categories`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `categories_slug_unique` (`slug`);
 
 --
 -- Indexes for table `districts`
@@ -1076,6 +1193,14 @@ ALTER TABLE `privileges`
   ADD KEY `privileges_user_id_foreign` (`user_id`);
 
 --
+-- Indexes for table `products`
+--
+ALTER TABLE `products`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `products_category_id_foreign` (`category_id`),
+  ADD KEY `products_brand_id_foreign` (`brand_id`);
+
+--
 -- Indexes for table `sessions`
 --
 ALTER TABLE `sessions`
@@ -1102,6 +1227,14 @@ ALTER TABLE `social_media`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `stocks`
+--
+ALTER TABLE `stocks`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `stocks_product_id_stock_type_index` (`product_id`,`stock_type`),
+  ADD KEY `stocks_stock_type_index` (`stock_type`);
+
+--
 -- Indexes for table `sub_districts`
 --
 ALTER TABLE `sub_districts`
@@ -1124,6 +1257,18 @@ ALTER TABLE `users`
 --
 -- AUTO_INCREMENT for dumped tables
 --
+
+--
+-- AUTO_INCREMENT for table `brands`
+--
+ALTER TABLE `brands`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT for table `categories`
+--
+ALTER TABLE `categories`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `districts`
@@ -1159,13 +1304,19 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
 
 --
 -- AUTO_INCREMENT for table `privileges`
 --
 ALTER TABLE `privileges`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=165;
+
+--
+-- AUTO_INCREMENT for table `products`
+--
+ALTER TABLE `products`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `sms_limits`
@@ -1184,6 +1335,12 @@ ALTER TABLE `sms_logs`
 --
 ALTER TABLE `social_media`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `stocks`
+--
+ALTER TABLE `stocks`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `sub_districts`
@@ -1218,6 +1375,19 @@ ALTER TABLE `email_otps`
 --
 ALTER TABLE `privileges`
   ADD CONSTRAINT `privileges_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `products`
+--
+ALTER TABLE `products`
+  ADD CONSTRAINT `products_brand_id_foreign` FOREIGN KEY (`brand_id`) REFERENCES `brands` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `products_category_id_foreign` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `stocks`
+--
+ALTER TABLE `stocks`
+  ADD CONSTRAINT `stocks_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `sub_districts`
