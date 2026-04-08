@@ -4,10 +4,14 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\PrivilegeController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\CashBookController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CostCategoryController;
+use App\Http\Controllers\CostController;
+use App\Http\Controllers\CostFieldController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\ProfitController;
 use App\Http\Controllers\StockController;
-use App\Http\Controllers\StockOutController;
 
 Route::name('admin.')->group(function () {
 
@@ -84,13 +88,75 @@ Route::prefix('admin')->group(function () {
     Route::delete('/products/delete/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
 });
 
-Route::prefix('admin')->group(function () {
-    Route::get('/stocks', [StockController::class, 'index'])->name('stocks.index');
-    Route::post('/stocks/store', [StockController::class, 'store'])->name('stocks.store');
-    Route::get('/stocks/edit/{id}', [StockController::class, 'edit'])->name('stocks.edit');
-    Route::post('/stocks/update/{id}', [StockController::class, 'update'])->name('stocks.update');
-    Route::delete('/stocks/destroy/{id}', [StockController::class, 'destroy'])->name('stocks.destroy'); // ✅ match JS
-});
 
 // Stock history route
 Route::get('/inventory/logs/{product}', [StockController::class, 'logs'])->name('inventory.logs'); // ✅ match JS
+
+
+
+// web.php
+Route::prefix('admin')->group(function () {
+
+    Route::get('/stock', [StockController::class, 'index'])->name('stock.index');
+    Route::post('/stock/in', [StockController::class, 'stockIn'])->name('stock.in');
+    Route::get('/stock/out', [StockController::class, 'stockOutIndex'])->name('stockOut.index');
+    Route::post('/stock/out', [StockController::class, 'stockOut'])->name('stock.out');
+    Route::get('/stock/return', [StockController::class, 'stockReturnIndex'])->name('stockReturn.index');
+
+    Route::get('/stock-invoice/{voucher}', [StockController::class, 'invoice'])->name('stock.invoice');
+    Route::get('/stockOut-invoice/{voucher}', [StockController::class, 'stockOutinvoice'])->name('stockOut.invoice');
+
+    Route::get('/stock-return/invoice/{voucher}', [StockController::class, 'stockReturninvoice'])->name('stockReturn.invoice');
+
+
+
+    // Correct route for product info
+    Route::get('/product-info/{id}', [StockController::class, 'getProductInfo'])->name('admin.product.info');
+
+    Route::post('/stock/return', [StockController::class, 'stockReturn'])->name('stock.return');
+    Route::get('/stock/report', [StockController::class, 'stockReport'])->name('stock.report');
+});
+
+
+// Cost Routes
+Route::prefix('cost')->group(function () {
+    Route::get('/', [CostController::class, 'index'])->name('cost.index');
+    Route::post('/store', [CostController::class, 'store'])->name('cost.store');
+    Route::get('/edit/{id}', [CostController::class, 'edit'])->name('cost.edit');
+    Route::post('/update/{id}', [CostController::class, 'update'])->name('cost.update');
+    Route::delete('/delete/{id}', [CostController::class, 'destroy'])->name('cost.delete');
+    // All Costs / Reports
+    Route::get('cost/all', [CostController::class, 'allCost'])->name('cost.all');
+});
+
+
+// Cost Category Routes
+Route::prefix('cost-category')->group(function () {
+    Route::get('/', [CostCategoryController::class, 'index'])->name('cost.category.index');
+    Route::post('/store', [CostCategoryController::class, 'store'])->name('cost.category.store');
+    Route::get('/edit/{id}', [CostCategoryController::class, 'edit'])->name('cost.category.edit');
+    Route::post('/update/{id}', [CostCategoryController::class, 'update'])->name('cost.category.update');
+    Route::delete('/delete/{id}', [CostCategoryController::class, 'destroy'])->name('cost.category.delete');
+});
+
+Route::prefix('cost')->name('cost.')->group(function () {
+
+    Route::get('field', [CostFieldController::class, 'index'])->name('field.index');
+    Route::post('field/store', [CostFieldController::class, 'store'])->name('field.store');
+    Route::get('field/edit/{id}', [CostFieldController::class, 'edit'])->name('field.edit');
+    Route::post('field/update/{id}', [CostFieldController::class, 'update'])->name('field.update');
+    Route::delete('field/delete/{id}', [CostFieldController::class, 'destroy'])->name('field.delete');
+});
+
+Route::get('cost/get-fields/{id}', function ($id) {
+    return \App\Models\CostField::where('cost_category_id', $id)->get();
+})->name('cost.get.fields');
+
+
+Route::get('/profit-report', [ProfitController::class, 'index'])->name('profit.report');
+Route::get('cashbook', [CashBookController::class, 'index'])->name('cashbook.index');
+
+
+Route::prefix('admin')->group(function () {
+    Route::get('/all/stocks/index', [StockController::class, 'allindex'])->name('admin.stocks.index');
+});

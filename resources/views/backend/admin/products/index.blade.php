@@ -2,42 +2,64 @@
 @section('title', 'Products')
 @section('page-content')
 
-<div class="container">
-    <button class="btn btn-primary mb-3" id="addProductBtn" data-bs-toggle="modal" data-bs-target="#productModal">Add Product</button>
+<div class="card border-0 shadow-sm mt-3">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-dark">Product List</h5>
+        <button class="btn btn-success px-4 shadow-sm" id="addProductBtn" data-bs-toggle="modal" data-bs-target="#productModal">
+            <i class="fas fa-plus-circle me-1"></i> Add Product
+        </button>
+    </div>
 
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Brand</th>
-                <th>Product Price</th>
-                <th>Sale Price</th>
-                <th>Unit</th>
-                <th>Status</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="product-table">
-            @foreach($products as $product)
-            <tr id="product-{{ $product->id }}">
-                <td>{{ $loop->iteration }}</td>
-                <td>{{ $product->name }}</td>
-                <td>{{ $product->category->title }}</td>
-                <td>{{ $product->brand->name }}</td>
-                <td>{{ $product->product_price }}</td>
-                <td>{{ $product->sale_price }}</td>
-                <td>{{ $product->unit }}</td>
-                <td>{{ ucfirst($product->status) }}</td>
-                <td>
-                    <button class="btn btn-sm btn-info edit-btn" data-id="{{ $product->id }}">Edit</button>
-                    <button class="btn btn-sm btn-danger delete-btn" data-id="{{ $product->id }}">Delete</button>
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+    <div class="card-body">
+        <div class="mb-3" style="max-width: 300px;">
+            <input type="text" id="productSearch" class="form-control form-control-sm" placeholder="Search Product by Name...">
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-center">#</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Brand</th>
+                        <th>Purchase Price</th>
+                        <th>Sale Price</th>
+                        <th>Unit</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="product-table">
+                    @foreach($products as $product)
+                    <tr id="product-{{ $product->id }}">
+                        <td class="text-center text-muted">{{ $loop->iteration }}</td>
+                        <td class="fw-bold">{{ $product->name }}</td>
+                        <td>{{ $product->category->title }}</td>
+                        <td>{{ $product->brand->name }}</td>
+                        <td class="text-secondary">{{ number_format($product->product_price, 2) }} Tk.</td>
+                        <td class="text-success fw-bold">{{ number_format($product->sale_price, 2) }} Tk.</td>
+                        <td>{{ $product->unit }}</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill {{ strtolower($product->status) == 'active' ? 'bg-success' : 'bg-secondary' }} px-3">
+                                {{ ucfirst($product->status) }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center gap-2">
+                                <button class="btn btn-sm btn-warning text-white edit-btn" data-id="{{ $product->id }}">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="{{ $product->id }}">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <!-- Modal -->
@@ -79,7 +101,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label>Product Price</label>
+                        <label>Purchase Price</label>
                         <input type="number" name="product_price" class="form-control" required>
                     </div>
 
@@ -139,7 +161,7 @@
                     type: 'POST',
                     data: $(this).serialize(),
                     success: function(res) {
-                       
+
                         location.reload();
                     },
                     error: function(xhr) {
@@ -187,7 +209,7 @@
                 type: 'POST', // or PUT if your route uses PUT
                 data: $('#productForm').serialize(),
                 success: function(res) {
-                   
+
                     location.reload();
                 },
                 error: function(xhr) {
@@ -213,7 +235,7 @@
                     _token: '{{ csrf_token() }}'
                 },
                 success: function(res) {
-                   
+
                     $('#product-' + id).remove();
                 },
                 error: function(xhr) {
@@ -222,6 +244,27 @@
             });
         });
 
+    });
+
+
+
+    // Live Search
+    $('#productSearch').on('keyup', function() {
+        let query = $(this).val();
+
+        $.ajax({
+            url: "{{ route('products.index') }}",
+            type: 'GET',
+            data: {
+                search: query
+            },
+            success: function(res) {
+                $('#product-table').html(res.html);
+            },
+            error: function(xhr) {
+                console.log(xhr);
+            }
+        });
     });
 </script>
 @endpush

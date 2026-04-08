@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 04, 2026 at 11:42 AM
+-- Generation Time: Apr 08, 2026 at 06:54 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.4.16
 
@@ -121,6 +121,76 @@ CREATE TABLE `categories` (
 
 INSERT INTO `categories` (`id`, `title`, `slug`, `image`, `status`, `created_at`, `updated_at`) VALUES
 (10, 'Test', 'test', '1775285111_Screenshot_2.jpg', 1, '2026-04-04 06:45:11', '2026-04-04 06:45:11');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `costs`
+--
+
+CREATE TABLE `costs` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `cost_category_id` bigint(20) UNSIGNED NOT NULL,
+  `cost_field_id` bigint(20) UNSIGNED NOT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `cost_by` varchar(255) NOT NULL,
+  `date` date NOT NULL DEFAULT '2026-03-31',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `costs`
+--
+
+INSERT INTO `costs` (`id`, `cost_category_id`, `cost_field_id`, `amount`, `cost_by`, `date`, `created_at`, `updated_at`) VALUES
+(5, 3, 2, 10000.00, 'Toufik', '2026-04-02', '2026-04-02 04:49:22', '2026-04-02 04:49:22'),
+(6, 3, 1, 10000.00, 'Toufik', '2026-04-03', '2026-04-02 04:59:06', '2026-04-02 04:59:06'),
+(7, 3, 2, 10000.00, 'Toufik', '2026-04-08', '2026-04-07 07:28:50', '2026-04-07 07:29:01');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `cost_categories`
+--
+
+CREATE TABLE `cost_categories` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `cost_categories`
+--
+
+INSERT INTO `cost_categories` (`id`, `name`, `created_at`, `updated_at`) VALUES
+(2, 'Salary', '2026-03-31 07:06:10', '2026-03-31 07:06:10'),
+(3, 'Bill', '2026-04-01 10:38:13', '2026-04-01 10:38:13'),
+(4, 'asasasa', '2026-04-07 07:28:36', '2026-04-07 07:28:36');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `cost_fields`
+--
+
+CREATE TABLE `cost_fields` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `cost_category_id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `cost_fields`
+--
+
+INSERT INTO `cost_fields` (`id`, `cost_category_id`, `name`, `created_at`, `updated_at`) VALUES
+(1, 3, 'Electricity', '2026-04-02 04:12:07', '2026-04-02 04:12:07'),
+(2, 3, 'Internet Bill', '2026-04-02 04:12:27', '2026-04-02 04:12:27');
 
 -- --------------------------------------------------------
 
@@ -334,7 +404,11 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (24, '2026_04_04_125318_create_brands_table', 8),
 (25, '2026_04_04_135502_create_products_table', 9),
 (26, '2026_04_04_151933_create_stocks_table', 10),
-(27, '2026_04_04_162920_create_stocks_table', 11);
+(27, '2026_04_04_162920_create_stocks_table', 11),
+(28, '2026_04_07_093834_create_stock_transactions_table', 12),
+(29, '2026_04_07_131036_create_cost_categories_table', 13),
+(30, '2026_04_07_131124_create_cost_fields_table', 14),
+(31, '2026_04_08_102149_create_stock_in_invoices_table', 15);
 
 -- --------------------------------------------------------
 
@@ -404,6 +478,7 @@ CREATE TABLE `products` (
   `sale_price` decimal(10,2) DEFAULT NULL,
   `unit` varchar(255) DEFAULT NULL,
   `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+  `total_stock` int(50) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -412,8 +487,10 @@ CREATE TABLE `products` (
 -- Dumping data for table `products`
 --
 
-INSERT INTO `products` (`id`, `name`, `category_id`, `brand_id`, `product_price`, `sale_price`, `unit`, `status`, `created_at`, `updated_at`) VALUES
-(5, 'Al Hasan Toufik', 10, 8, 300.00, 350.00, 'piece', 'active', '2026-04-04 09:26:11', '2026-04-04 09:26:11');
+INSERT INTO `products` (`id`, `name`, `category_id`, `brand_id`, `product_price`, `sale_price`, `unit`, `status`, `total_stock`, `created_at`, `updated_at`) VALUES
+(1, 'Mango', 10, 8, 300.00, 400.00, 'pcs', 'active', 112, '2026-04-07 07:40:15', '2026-04-08 06:14:27'),
+(2, 'Banana', 10, 8, 250.00, 300.00, 'kg', 'active', 107, '2026-04-07 07:40:32', '2026-04-08 06:03:49'),
+(3, 'Chicken (1kg)', 10, 8, 175.00, 220.00, 'kg', 'active', 72, '2026-04-07 07:41:05', '2026-04-08 06:04:24');
 
 -- --------------------------------------------------------
 
@@ -435,7 +512,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('1wgXBHnMX2Rd7nbzKFiBuTNvVv40074f7e2AEO5z', 8, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoibFRXMU9qWGlzeG1EY3pxcGlJb2xld0xrVndvVXhjZlp0cUVVY1FSQiI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDA6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbi9hZG1pbi9zdG9ja3MiO3M6NToicm91dGUiO3M6MTI6InN0b2Nrcy5pbmRleCI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjg7fQ==', 1775301956);
+('tpgAb8dXceXk24AOI6E4IDFEBSJKU3HJ2lFELZvO', 8, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiSHFRN240Y3JZMnVENUd3YlYxY2cySHJzYW5lWFNON1E2dmVNYkNQZCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mzc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbi9kYXNoYm9hcmQiO3M6NToicm91dGUiO3M6MTU6ImFkbWluLmRhc2hib2FyZCI7fXM6MzoidXJsIjthOjE6e3M6ODoiaW50ZW5kZWQiO3M6NDI6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbi9hZG1pbi9wcm9kdWN0cyI7fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjg7fQ==', 1775631238);
 
 -- --------------------------------------------------------
 
@@ -524,18 +601,171 @@ CREATE TABLE `stocks` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --------------------------------------------------------
+
 --
--- Dumping data for table `stocks`
+-- Table structure for table `stock_in_invoices`
 --
 
-INSERT INTO `stocks` (`id`, `product_id`, `quantity`, `stock_type`, `note`, `created_at`, `updated_at`) VALUES
-(1, 5, 1000, 'in', 'none', '2026-04-04 10:30:08', '2026-04-04 10:30:08'),
-(2, 5, 1000, 'out', 'done', '2026-04-04 10:48:23', '2026-04-04 10:48:23'),
-(3, 5, 100, 'in', 'note', '2026-04-04 10:52:20', '2026-04-04 10:52:20'),
-(4, 5, 99, 'out', 'hhhh', '2026-04-04 10:52:32', '2026-04-04 10:52:32'),
-(5, 5, 1, 'out', 'jkjk', '2026-04-04 10:52:42', '2026-04-04 10:52:42'),
-(6, 5, 100, 'in', 'note', '2026-04-04 10:55:40', '2026-04-04 10:55:40'),
-(7, 5, 99, 'out', 'fbvfgfgbf', '2026-04-04 10:56:03', '2026-04-04 10:56:03');
+CREATE TABLE `stock_in_invoices` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `voucher_no` varchar(255) NOT NULL,
+  `pdf_path` varchar(255) NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `stock_transactions`
+--
+
+CREATE TABLE `stock_transactions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `product_id` bigint(20) UNSIGNED NOT NULL,
+  `type` enum('in','out','return') NOT NULL,
+  `previous_stock` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `total_price` varchar(255) NOT NULL DEFAULT '0',
+  `current_stock` int(11) NOT NULL,
+  `in_date` date NOT NULL DEFAULT current_timestamp(),
+  `note` varchar(255) DEFAULT NULL,
+  `voucher_no` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `stock_transactions`
+--
+
+INSERT INTO `stock_transactions` (`id`, `product_id`, `type`, `previous_stock`, `quantity`, `total_price`, `current_stock`, `in_date`, `note`, `voucher_no`, `created_at`, `updated_at`) VALUES
+(4, 1, 'in', 0, 10, '4000', 10, '2026-04-08', 'Stock In', 'IN2026040001', '2026-04-08 03:20:11', '2026-04-08 03:20:11'),
+(5, 2, 'in', 0, 10, '3500', 10, '2026-04-08', 'Stock In', 'IN2026040001', '2026-04-08 03:20:11', '2026-04-08 03:20:11'),
+(6, 3, 'in', 0, 10, '2750', 10, '2026-04-08', 'Stock In', 'IN2026040001', '2026-04-08 03:20:11', '2026-04-08 03:20:11'),
+(7, 1, 'out', 10, 5, '2500', 5, '2026-04-08', 'Stock Out', 'OUT2026040001', '2026-04-08 03:28:07', '2026-04-08 03:28:07'),
+(8, 2, 'out', 10, 5, '2000', 5, '2026-04-08', 'Stock Out', 'OUT2026040001', '2026-04-08 03:28:07', '2026-04-08 03:28:07'),
+(9, 3, 'out', 10, 5, '1600', 5, '2026-04-08', 'Stock Out', 'OUT2026040001', '2026-04-08 03:28:07', '2026-04-08 03:28:07'),
+(10, 1, 'return', 5, 5, '-1000', 10, '2026-04-08', 'Stock Return', 'RET20260400001', '2026-04-08 03:42:27', '2026-04-08 03:42:27'),
+(11, 2, 'return', 5, 5, '-1000', 10, '2026-04-08', 'Stock Return', 'RET20260400001', '2026-04-08 03:42:27', '2026-04-08 03:42:27'),
+(12, 3, 'return', 5, 5, '-750', 10, '2026-04-08', 'Stock Return', 'RET20260400001', '2026-04-08 03:42:27', '2026-04-08 03:42:27'),
+(13, 1, 'in', 10, 5, '1500', 15, '2026-04-08', 'Stock In', 'IN20260440002', '2026-04-08 03:50:57', '2026-04-08 03:50:57'),
+(14, 2, 'in', 10, 5, '1250', 15, '2026-04-08', 'Stock In', 'IN20260440002', '2026-04-08 03:50:57', '2026-04-08 03:50:57'),
+(15, 3, 'in', 10, 5, '875', 15, '2026-04-08', 'Stock In', 'IN20260440002', '2026-04-08 03:50:57', '2026-04-08 03:50:57'),
+(16, 1, 'in', 15, 5, '1500', 20, '2026-04-08', 'Stock In', 'IN20260440003', '2026-04-08 03:56:10', '2026-04-08 03:56:10'),
+(17, 2, 'in', 15, 5, '1250', 20, '2026-04-08', 'Stock In', 'IN20260440003', '2026-04-08 03:56:10', '2026-04-08 03:56:10'),
+(18, 3, 'in', 15, 5, '875', 20, '2026-04-08', 'Stock In', 'IN20260440003', '2026-04-08 03:56:10', '2026-04-08 03:56:10'),
+(19, 1, 'in', 20, 5, '1500', 25, '2026-04-08', 'Stock In', 'IN20260440004', '2026-04-08 03:57:40', '2026-04-08 03:57:40'),
+(20, 2, 'in', 20, 5, '1250', 25, '2026-04-08', 'Stock In', 'IN20260440004', '2026-04-08 03:57:40', '2026-04-08 03:57:40'),
+(21, 3, 'in', 20, 5, '875', 25, '2026-04-08', 'Stock In', 'IN20260440004', '2026-04-08 03:57:40', '2026-04-08 03:57:40'),
+(22, 1, 'in', 25, 5, '2000', 30, '2026-04-08', 'Stock In', 'IN20260440005', '2026-04-08 03:58:07', '2026-04-08 03:58:07'),
+(23, 2, 'in', 25, 5, '1750', 30, '2026-04-08', 'Stock In', 'IN20260440005', '2026-04-08 03:58:07', '2026-04-08 03:58:07'),
+(24, 3, 'in', 25, 5, '1375', 30, '2026-04-08', 'Stock In', 'IN20260440005', '2026-04-08 03:58:07', '2026-04-08 03:58:07'),
+(25, 1, 'in', 30, 5, '1500', 35, '2026-04-08', 'Stock In', 'IN20260440006', '2026-04-08 04:01:37', '2026-04-08 04:01:37'),
+(26, 2, 'in', 30, 5, '1250', 35, '2026-04-08', 'Stock In', 'IN20260440006', '2026-04-08 04:01:37', '2026-04-08 04:01:37'),
+(27, 3, 'in', 30, 5, '875', 35, '2026-04-08', 'Stock In', 'IN20260440006', '2026-04-08 04:01:37', '2026-04-08 04:01:37'),
+(28, 1, 'in', 35, 5, '1500', 40, '2026-04-08', 'Stock In', 'IN20260440007', '2026-04-08 04:06:35', '2026-04-08 04:06:35'),
+(29, 2, 'in', 35, 5, '1250', 40, '2026-04-08', 'Stock In', 'IN20260440007', '2026-04-08 04:06:35', '2026-04-08 04:06:35'),
+(30, 3, 'in', 35, 5, '875', 40, '2026-04-08', 'Stock In', 'IN20260440007', '2026-04-08 04:06:35', '2026-04-08 04:06:35'),
+(37, 2, 'in', 40, 5, '1250', 45, '2026-04-08', 'Stock In', 'IN20260440008', '2026-04-08 04:30:43', '2026-04-08 04:30:43'),
+(38, 3, 'in', 40, 5, '875', 45, '2026-04-08', 'Stock In', 'IN20260440008', '2026-04-08 04:30:43', '2026-04-08 04:30:43'),
+(39, 1, 'in', 40, 5, '1500', 45, '2026-04-08', 'Stock In', 'IN20260440008', '2026-04-08 04:30:43', '2026-04-08 04:30:43'),
+(40, 1, 'in', 45, 5, '1250', 50, '2026-04-08', 'Stock In', 'IN20260440009', '2026-04-08 04:33:16', '2026-04-08 04:33:16'),
+(41, 2, 'in', 45, 5, '1250', 50, '2026-04-08', 'Stock In', 'IN20260440009', '2026-04-08 04:33:16', '2026-04-08 04:33:16'),
+(42, 3, 'in', 45, 5, '875', 50, '2026-04-08', 'Stock In', 'IN20260440009', '2026-04-08 04:33:16', '2026-04-08 04:33:16'),
+(43, 1, 'out', 50, 10, '4000', 40, '2026-04-08', 'Stock Out', 'OUT20260440002', '2026-04-08 04:36:24', '2026-04-08 04:36:24'),
+(44, 2, 'out', 50, 10, '3000', 40, '2026-04-08', 'Stock Out', 'OUT20260440002', '2026-04-08 04:36:24', '2026-04-08 04:36:24'),
+(45, 3, 'out', 50, 10, '2200', 40, '2026-04-08', 'Stock Out', 'OUT20260440002', '2026-04-08 04:36:24', '2026-04-08 04:36:24'),
+(46, 1, 'out', 40, 5, '2000', 35, '2026-04-08', 'Stock Out', 'OUT20260440003', '2026-04-08 04:38:05', '2026-04-08 04:38:05'),
+(47, 2, 'out', 40, 5, '1500', 35, '2026-04-08', 'Stock Out', 'OUT20260440003', '2026-04-08 04:38:05', '2026-04-08 04:38:05'),
+(48, 3, 'out', 40, 5, '1100', 35, '2026-04-08', 'Stock Out', 'OUT20260440003', '2026-04-08 04:38:05', '2026-04-08 04:38:05'),
+(49, 1, 'out', 35, 10, '4000', 25, '2026-04-08', 'Stock Out', 'OUT20260440004', '2026-04-08 04:42:22', '2026-04-08 04:42:22'),
+(50, 2, 'out', 35, 10, '3000', 25, '2026-04-08', 'Stock Out', 'OUT20260440004', '2026-04-08 04:42:22', '2026-04-08 04:42:22'),
+(51, 3, 'out', 35, 10, '2200', 25, '2026-04-08', 'Stock Out', 'OUT20260440004', '2026-04-08 04:42:22', '2026-04-08 04:42:22'),
+(52, 1, 'out', 25, 10, '4000', 15, '2026-04-08', 'Stock Out', 'OUT20260440005', '2026-04-08 04:43:42', '2026-04-08 04:43:42'),
+(53, 2, 'out', 25, 10, '3000', 15, '2026-04-08', 'Stock Out', 'OUT20260440005', '2026-04-08 04:43:42', '2026-04-08 04:43:42'),
+(54, 3, 'out', 25, 10, '2200', 15, '2026-04-08', 'Stock Out', 'OUT20260440005', '2026-04-08 04:43:42', '2026-04-08 04:43:42'),
+(55, 1, 'out', 15, 5, '2000', 10, '2026-04-08', 'Stock Out', 'OUT20260440006', '2026-04-08 04:47:02', '2026-04-08 04:47:02'),
+(56, 2, 'out', 15, 5, '1500', 10, '2026-04-08', 'Stock Out', 'OUT20260440006', '2026-04-08 04:47:02', '2026-04-08 04:47:02'),
+(57, 3, 'out', 15, 5, '1100', 10, '2026-04-08', 'Stock Out', 'OUT20260440006', '2026-04-08 04:47:02', '2026-04-08 04:47:02'),
+(58, 1, 'out', 10, 5, '2000', 5, '2026-04-08', 'Stock Out', 'OUT20260440007', '2026-04-08 04:48:06', '2026-04-08 04:48:06'),
+(59, 2, 'out', 10, 5, '1500', 5, '2026-04-08', 'Stock Out', 'OUT20260440007', '2026-04-08 04:48:06', '2026-04-08 04:48:06'),
+(60, 3, 'out', 10, 5, '1100', 5, '2026-04-08', 'Stock Out', 'OUT20260440007', '2026-04-08 04:48:06', '2026-04-08 04:48:06'),
+(61, 1, 'out', 5, 2, '800', 3, '2026-04-08', 'Stock Out', 'OUT20260440008', '2026-04-08 04:48:33', '2026-04-08 04:48:33'),
+(62, 2, 'out', 5, 2, '600', 3, '2026-04-08', 'Stock Out', 'OUT20260440008', '2026-04-08 04:48:33', '2026-04-08 04:48:33'),
+(63, 3, 'out', 5, 2, '440', 3, '2026-04-08', 'Stock Out', 'OUT20260440008', '2026-04-08 04:48:33', '2026-04-08 04:48:33'),
+(64, 1, 'out', 3, 1, '400', 2, '2026-04-08', 'Stock Out', 'OUT20260440009', '2026-04-08 04:52:12', '2026-04-08 04:52:12'),
+(65, 2, 'out', 3, 1, '300', 2, '2026-04-08', 'Stock Out', 'OUT20260440009', '2026-04-08 04:52:12', '2026-04-08 04:52:12'),
+(66, 3, 'out', 3, 1, '220', 2, '2026-04-08', 'Stock Out', 'OUT20260440009', '2026-04-08 04:52:12', '2026-04-08 04:52:12'),
+(67, 1, 'in', 2, 100, '30000', 102, '2026-04-08', 'Stock In', 'IN20260440010', '2026-04-08 04:53:05', '2026-04-08 04:53:05'),
+(68, 2, 'in', 2, 100, '25000', 102, '2026-04-08', 'Stock In', 'IN20260440010', '2026-04-08 04:53:05', '2026-04-08 04:53:05'),
+(69, 3, 'in', 2, 100, '17500', 102, '2026-04-08', 'Stock In', 'IN20260440010', '2026-04-08 04:53:05', '2026-04-08 04:53:05'),
+(70, 1, 'out', 102, 5, '2000', 97, '2026-04-08', 'Stock Out', 'OUT20260440010', '2026-04-08 04:53:22', '2026-04-08 04:53:22'),
+(71, 2, 'out', 102, 5, '1500', 97, '2026-04-08', 'Stock Out', 'OUT20260440010', '2026-04-08 04:53:22', '2026-04-08 04:53:22'),
+(72, 3, 'out', 102, 5, '1100', 97, '2026-04-08', 'Stock Out', 'OUT20260440010', '2026-04-08 04:53:22', '2026-04-08 04:53:22'),
+(73, 1, 'out', 97, 5, '2000', 92, '2026-04-08', 'Stock Out', 'OUT20260440011', '2026-04-08 04:57:45', '2026-04-08 04:57:45'),
+(74, 2, 'out', 97, 5, '1500', 92, '2026-04-08', 'Stock Out', 'OUT20260440011', '2026-04-08 04:57:45', '2026-04-08 04:57:45'),
+(75, 3, 'out', 97, 5, '1100', 92, '2026-04-08', 'Stock Out', 'OUT20260440011', '2026-04-08 04:57:45', '2026-04-08 04:57:45'),
+(76, 1, 'out', 92, 5, '2000', 87, '2026-04-08', 'Stock Out', 'OUT20260440012', '2026-04-08 05:08:03', '2026-04-08 05:08:03'),
+(77, 2, 'out', 92, 5, '1500', 87, '2026-04-08', 'Stock Out', 'OUT20260440012', '2026-04-08 05:08:03', '2026-04-08 05:08:03'),
+(78, 3, 'out', 92, 5, '1100', 87, '2026-04-08', 'Stock Out', 'OUT20260440012', '2026-04-08 05:08:03', '2026-04-08 05:08:03'),
+(79, 1, 'out', 87, 5, '2000', 82, '2026-04-08', 'Stock Out', 'OUT20260440013', '2026-04-08 05:09:29', '2026-04-08 05:09:29'),
+(80, 2, 'out', 87, 5, '1500', 82, '2026-04-08', 'Stock Out', 'OUT20260440013', '2026-04-08 05:09:29', '2026-04-08 05:09:29'),
+(81, 3, 'out', 87, 5, '1100', 82, '2026-04-08', 'Stock Out', 'OUT20260440013', '2026-04-08 05:09:29', '2026-04-08 05:09:29'),
+(82, 1, 'out', 82, 50, '20000', 32, '2026-04-08', 'Stock Out', 'OUT20260440014', '2026-04-08 05:09:51', '2026-04-08 05:09:51'),
+(83, 2, 'out', 82, 50, '15000', 32, '2026-04-08', 'Stock Out', 'OUT20260440014', '2026-04-08 05:09:51', '2026-04-08 05:09:51'),
+(84, 3, 'out', 82, 50, '11000', 32, '2026-04-08', 'Stock Out', 'OUT20260440014', '2026-04-08 05:09:51', '2026-04-08 05:09:51'),
+(85, 1, 'out', 32, 20, '8000', 12, '2026-04-08', 'Stock Out', 'OUT20260440015', '2026-04-08 05:12:04', '2026-04-08 05:12:04'),
+(86, 2, 'out', 32, 20, '6000', 12, '2026-04-08', 'Stock Out', 'OUT20260440015', '2026-04-08 05:12:04', '2026-04-08 05:12:04'),
+(87, 3, 'out', 32, 20, '4400', 12, '2026-04-08', 'Stock Out', 'OUT20260440015', '2026-04-08 05:12:04', '2026-04-08 05:12:04'),
+(88, 1, 'return', 12, 5, '-1500', 17, '2026-04-08', 'Stock Return', 'RET20260400002', '2026-04-08 05:25:32', '2026-04-08 05:25:32'),
+(89, 2, 'return', 12, 5, '-1250', 17, '2026-04-08', 'Stock Return', 'RET20260400002', '2026-04-08 05:25:32', '2026-04-08 05:25:32'),
+(90, 3, 'return', 12, 5, '-875', 17, '2026-04-08', 'Stock Return', 'RET20260400002', '2026-04-08 05:25:32', '2026-04-08 05:25:32'),
+(91, 1, 'return', 17, 5, '-1500', 22, '2026-04-08', 'Stock Return', 'RET20260400003', '2026-04-08 05:31:28', '2026-04-08 05:31:28'),
+(92, 2, 'return', 17, 5, '-1250', 22, '2026-04-08', 'Stock Return', 'RET20260400003', '2026-04-08 05:31:28', '2026-04-08 05:31:28'),
+(93, 3, 'return', 17, 5, '-875', 22, '2026-04-08', 'Stock Return', 'RET20260400003', '2026-04-08 05:31:28', '2026-04-08 05:31:28'),
+(94, 1, 'return', 22, 5, '-1500', 27, '2026-04-08', 'Stock Return', 'RET20260400004', '2026-04-08 05:31:58', '2026-04-08 05:31:58'),
+(95, 2, 'return', 22, 5, '-1250', 27, '2026-04-08', 'Stock Return', 'RET20260400004', '2026-04-08 05:31:58', '2026-04-08 05:31:58'),
+(96, 3, 'return', 22, 5, '-875', 27, '2026-04-08', 'Stock Return', 'RET20260400004', '2026-04-08 05:31:58', '2026-04-08 05:31:58'),
+(97, 1, 'return', 27, 5, '-1500', 32, '2026-04-08', 'Stock Return', 'RET20260400005', '2026-04-08 05:36:15', '2026-04-08 05:36:15'),
+(98, 2, 'return', 27, 5, '-1250', 32, '2026-04-08', 'Stock Return', 'RET20260400005', '2026-04-08 05:36:15', '2026-04-08 05:36:15'),
+(99, 3, 'return', 27, 5, '-875', 32, '2026-04-08', 'Stock Return', 'RET20260400005', '2026-04-08 05:36:15', '2026-04-08 05:36:15'),
+(100, 1, 'return', 32, 5, '-1500', 37, '2026-04-08', 'Stock Return', 'RET20260400006', '2026-04-08 05:36:58', '2026-04-08 05:36:58'),
+(101, 2, 'return', 32, 5, '-1250', 37, '2026-04-08', 'Stock Return', 'RET20260400006', '2026-04-08 05:36:58', '2026-04-08 05:36:58'),
+(102, 3, 'return', 32, 5, '-875', 37, '2026-04-08', 'Stock Return', 'RET20260400006', '2026-04-08 05:36:58', '2026-04-08 05:36:58'),
+(103, 1, 'return', 37, 5, '-1500', 42, '2026-04-08', 'Stock Return', 'RET20260400007', '2026-04-08 05:37:08', '2026-04-08 05:37:08'),
+(104, 2, 'return', 37, 5, '-1250', 42, '2026-04-08', 'Stock Return', 'RET20260400007', '2026-04-08 05:37:08', '2026-04-08 05:37:08'),
+(105, 1, 'return', 42, 5, '-1500', 47, '2026-04-08', 'Stock Return', 'RET20260400008', '2026-04-08 05:40:15', '2026-04-08 05:40:15'),
+(106, 2, 'return', 42, 5, '-1250', 47, '2026-04-08', 'Stock Return', 'RET20260400008', '2026-04-08 05:40:15', '2026-04-08 05:40:15'),
+(107, 3, 'return', 37, 5, '-875', 42, '2026-04-08', 'Stock Return', 'RET20260400008', '2026-04-08 05:40:15', '2026-04-08 05:40:15'),
+(108, 1, 'return', 47, 5, '-1500', 52, '2026-04-08', 'Stock Return', 'RET20260400009', '2026-04-08 05:42:24', '2026-04-08 05:42:24'),
+(109, 2, 'return', 47, 5, '-1250', 52, '2026-04-08', 'Stock Return', 'RET20260400009', '2026-04-08 05:42:24', '2026-04-08 05:42:24'),
+(110, 3, 'return', 42, 5, '-875', 47, '2026-04-08', 'Stock Return', 'RET20260400009', '2026-04-08 05:42:24', '2026-04-08 05:42:24'),
+(111, 1, 'return', 52, 5, '-1500', 57, '2026-04-08', 'Stock Return', 'RET20260400010', '2026-04-08 05:42:51', '2026-04-08 05:42:51'),
+(112, 2, 'return', 52, 5, '-1250', 57, '2026-04-08', 'Stock Return', 'RET20260400010', '2026-04-08 05:42:51', '2026-04-08 05:42:51'),
+(113, 3, 'return', 47, 5, '-875', 52, '2026-04-08', 'Stock Return', 'RET20260400010', '2026-04-08 05:42:51', '2026-04-08 05:42:51'),
+(114, 1, 'return', 57, 5, '-1500', 62, '2026-04-08', 'Stock Return', 'RET20260400011', '2026-04-08 05:44:12', '2026-04-08 05:44:12'),
+(115, 2, 'return', 57, 5, '-1250', 62, '2026-04-08', 'Stock Return', 'RET20260400011', '2026-04-08 05:44:12', '2026-04-08 05:44:12'),
+(116, 1, 'return', 62, 5, '-1500', 67, '2026-04-08', 'Stock Return', 'RET20260400012', '2026-04-08 05:45:32', '2026-04-08 05:45:32'),
+(117, 1, 'return', 67, 5, '-1500', 72, '2026-04-08', 'Stock Return', 'RET20260400013', '2026-04-08 05:46:56', '2026-04-08 05:46:56'),
+(118, 2, 'return', 62, 5, '-1250', 67, '2026-04-08', 'Stock Return', 'RET20260400013', '2026-04-08 05:46:56', '2026-04-08 05:46:56'),
+(119, 3, 'return', 52, 5, '-875', 57, '2026-04-08', 'Stock Return', 'RET20260400013', '2026-04-08 05:46:56', '2026-04-08 05:46:56'),
+(120, 1, 'return', 72, 5, '-1500', 77, '2026-04-08', 'Stock Return', 'RET20260400014', '2026-04-08 05:47:58', '2026-04-08 05:47:58'),
+(121, 1, 'return', 77, 5, '-1500', 82, '2026-04-08', 'Stock Return', 'RET20260400015', '2026-04-08 05:48:40', '2026-04-08 05:48:40'),
+(122, 1, 'return', 82, 5, '-1500', 87, '2026-04-08', 'Stock Return', 'RET20260400016', '2026-04-08 05:48:49', '2026-04-08 05:48:49'),
+(123, 1, 'return', 87, 5, '-1500', 92, '2026-04-08', 'Stock Return', 'RET20260400017', '2026-04-08 05:49:16', '2026-04-08 05:49:16'),
+(124, 3, 'return', 57, 10, '-1750', 67, '2026-04-08', 'Stock Return', 'RET20260400018', '2026-04-08 05:51:59', '2026-04-08 05:51:59'),
+(125, 2, 'return', 67, 10, '-2500', 77, '2026-04-08', 'Stock Return', 'RET20260400019', '2026-04-08 05:55:14', '2026-04-08 05:55:14'),
+(126, 2, 'return', 77, 10, '-2500', 87, '2026-04-08', 'Stock Return', 'RET20260400020', '2026-04-08 05:58:04', '2026-04-08 05:58:04'),
+(127, 2, 'return', 87, 10, '-2500', 97, '2026-04-08', 'Stock Return', 'RET20260400021', '2026-04-08 05:58:41', '2026-04-08 05:58:41'),
+(128, 1, 'return', 92, 5, '-1500', 97, '2026-04-08', 'Stock Return', 'RET20260400022', '2026-04-08 06:03:14', '2026-04-08 06:03:14'),
+(129, 2, 'return', 97, 5, '-1250', 102, '2026-04-08', 'Stock Return', 'RET20260400022', '2026-04-08 06:03:14', '2026-04-08 06:03:14'),
+(130, 1, 'return', 97, 5, '-1500', 102, '2026-04-08', 'Stock Return', 'RET20260400023', '2026-04-08 06:03:49', '2026-04-08 06:03:49'),
+(131, 2, 'return', 102, 5, '-1250', 107, '2026-04-08', 'Stock Return', 'RET20260400023', '2026-04-08 06:03:49', '2026-04-08 06:03:49'),
+(132, 1, 'return', 102, 5, '-1500', 107, '2026-04-08', 'Stock Return', 'RET20260400024', '2026-04-08 06:04:24', '2026-04-08 06:04:24'),
+(133, 3, 'return', 67, 5, '-875', 72, '2026-04-08', 'Stock Return', 'RET20260400024', '2026-04-08 06:04:24', '2026-04-08 06:04:24'),
+(134, 1, 'return', 107, 5, '-1500', 112, '2026-04-08', 'Stock Return', 'RET20260400025', '2026-04-08 06:14:27', '2026-04-08 06:14:27');
 
 -- --------------------------------------------------------
 
@@ -1074,7 +1304,7 @@ CREATE TABLE `system_settings` (
 --
 
 INSERT INTO `system_settings` (`id`, `title`, `email`, `system_name`, `copyright_text`, `logo`, `favicon`, `description`, `created_at`, `updated_at`, `deleted_at`) VALUES
-(1, 'Lead Manager', 'freelanceiT@gmail.com', '+৮৮ ০২ ৯৯৮৮২৩১৩২', 'Freelance iT', 'uploads/logos/1773223018665311572.jpg', 'uploads/favicons/1773223026168694970.jpg', NULL, '2025-12-10 12:23:02', '2026-03-11 09:57:06', NULL);
+(1, 'Funobd', 'freelanceiT@gmail.com', '+৮৮ ০২ ৯৯৮৮২৩১৩২', 'Freelance iT', 'uploads/logos/17755627211566537256.jpg', 'uploads/favicons/17755627211983032368.jpg', NULL, '2025-12-10 12:23:02', '2026-04-07 11:52:01', NULL);
 
 -- --------------------------------------------------------
 
@@ -1133,6 +1363,27 @@ ALTER TABLE `cache_locks`
 ALTER TABLE `categories`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `categories_slug_unique` (`slug`);
+
+--
+-- Indexes for table `costs`
+--
+ALTER TABLE `costs`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `costs_cost_category_id_foreign` (`cost_category_id`),
+  ADD KEY `costs_cost_field_id_foreign` (`cost_field_id`);
+
+--
+-- Indexes for table `cost_categories`
+--
+ALTER TABLE `cost_categories`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `cost_fields`
+--
+ALTER TABLE `cost_fields`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `cost_fields_cost_category_id_foreign` (`cost_category_id`);
 
 --
 -- Indexes for table `districts`
@@ -1235,6 +1486,20 @@ ALTER TABLE `stocks`
   ADD KEY `stocks_stock_type_index` (`stock_type`);
 
 --
+-- Indexes for table `stock_in_invoices`
+--
+ALTER TABLE `stock_in_invoices`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `stock_in_invoices_voucher_no_unique` (`voucher_no`);
+
+--
+-- Indexes for table `stock_transactions`
+--
+ALTER TABLE `stock_transactions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `stock_transactions_product_id_foreign` (`product_id`);
+
+--
 -- Indexes for table `sub_districts`
 --
 ALTER TABLE `sub_districts`
@@ -1271,6 +1536,24 @@ ALTER TABLE `categories`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
+-- AUTO_INCREMENT for table `costs`
+--
+ALTER TABLE `costs`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `cost_categories`
+--
+ALTER TABLE `cost_categories`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `cost_fields`
+--
+ALTER TABLE `cost_fields`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT for table `districts`
 --
 ALTER TABLE `districts`
@@ -1304,7 +1587,7 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `privileges`
@@ -1316,7 +1599,7 @@ ALTER TABLE `privileges`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `sms_limits`
@@ -1340,7 +1623,19 @@ ALTER TABLE `social_media`
 -- AUTO_INCREMENT for table `stocks`
 --
 ALTER TABLE `stocks`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `stock_in_invoices`
+--
+ALTER TABLE `stock_in_invoices`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `stock_transactions`
+--
+ALTER TABLE `stock_transactions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=135;
 
 --
 -- AUTO_INCREMENT for table `sub_districts`
@@ -1363,6 +1658,19 @@ ALTER TABLE `users`
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `costs`
+--
+ALTER TABLE `costs`
+  ADD CONSTRAINT `costs_cost_category_id_foreign` FOREIGN KEY (`cost_category_id`) REFERENCES `cost_categories` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `costs_cost_field_id_foreign` FOREIGN KEY (`cost_field_id`) REFERENCES `cost_fields` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `cost_fields`
+--
+ALTER TABLE `cost_fields`
+  ADD CONSTRAINT `cost_fields_cost_category_id_foreign` FOREIGN KEY (`cost_category_id`) REFERENCES `cost_categories` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `email_otps`
@@ -1388,6 +1696,12 @@ ALTER TABLE `products`
 --
 ALTER TABLE `stocks`
   ADD CONSTRAINT `stocks_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `stock_transactions`
+--
+ALTER TABLE `stock_transactions`
+  ADD CONSTRAINT `stock_transactions_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `sub_districts`

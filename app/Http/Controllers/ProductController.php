@@ -9,11 +9,26 @@ use App\Models\Brand;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with(['category', 'brand'])->latest()->get();
         $categories = Category::all();
         $brands = Brand::all();
+
+        // If AJAX request for live search
+        if ($request->ajax() && $request->has('search')) {
+            $search = $request->search;
+            $products = Product::with(['category', 'brand'])
+                ->where('name', 'like', "%{$search}%")
+                ->latest()
+                ->get();
+
+            // Return JSON with rendered rows
+            $html = view('backend.admin.products.partials.product_rows', compact('products'))->render();
+            return response()->json(['html' => $html]);
+        }
+
+        // Default: load all products
+        $products = Product::with(['category', 'brand'])->latest()->get();
         return view('backend.admin.products.index', compact('products', 'categories', 'brands'));
     }
 

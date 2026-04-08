@@ -17,6 +17,7 @@ class Product extends Model
         'sale_price',
         'unit',
         'status',
+         'total_stock', // ✅ MUST
     ];
 
     public function category()
@@ -40,5 +41,10 @@ class Product extends Model
         $out = $this->stocks()->where('stock_type', 'out')->sum('quantity');
 
         return $in - $out;
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(StockTransaction::class);
     }
 }

@@ -3,137 +3,364 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\Stock;
+use App\Models\StockTransaction;
+use App\Models\SystemSetting;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class StockController extends Controller
 {
-    // Show Inventory Page
     public function index()
     {
-        $products = Product::with('stocks')->get();
-        $stocks = Stock::with('product')->latest()->get();
-
-        // Calculate current stock per product
-        $currentStocks = Stock::select('product_id')
-            ->selectRaw("SUM(CASE WHEN stock_type='in' THEN quantity ELSE 0 END) - SUM(CASE WHEN stock_type='out' THEN quantity ELSE 0 END) as current_stock")
-            ->groupBy('product_id')
-            ->pluck('current_stock', 'product_id');
-
-        return view('backend.admin.stock.index', compact('products', 'stocks', 'currentStocks'));
+        $products = Product::all();
+        return view('backend.admin.stock.index', compact('products'));
     }
 
-    // Store Stock (In/Out)
-    public function store(Request $request)
+    public function getProductInfo($id)
     {
-        $validator = Validator::make($request->all(), [
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|numeric|min:1',
-            'stock_type' => 'required|in:in,out',
-        ]);
+        $product = Product::find($id);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()]);
+        if (!$product) {
+            return response()->json([
+                'stock' => 0,
+                'price' => 0,
+                'sale_price' => 0,
+            ]);
         }
-
-        $productId = $request->product_id;
-        $quantity = $request->quantity;
-        $stockType = $request->stock_type;
-
-        // ❗ Stock Out validation
-        if ($stockType === 'out') {
-            $in = Stock::where('product_id', $productId)->where('stock_type', 'in')->sum('quantity');
-            $out = Stock::where('product_id', $productId)->where('stock_type', 'out')->sum('quantity');
-            $currentStock = $in - $out;
-
-            if ($quantity > $currentStock) {
-                return response()->json([
-                    'errors' => ['quantity' => ['Not enough stock!']]
-                ]);
-            }
-        }
-
-        $stock = Stock::create([
-            'product_id' => $productId,
-            'quantity' => $quantity,
-            'stock_type' => $stockType,
-            'note' => $request->note,
-        ]);
-
-        $stock->load('product');
 
         return response()->json([
-            'success' => 'Stock added successfully!',
-            'stock' => $stock
+            'stock' => (int) ($product->total_stock ?? 0),
+            'price' => (float) ($product->product_price ?? 0),
+            'sale_price' => (float) ($product->sale_price ?? 0),
         ]);
     }
 
-    // Fetch Stock for Edit
-    public function edit($id)
+    public function stockIn(Request $request)
     {
-        $stock = Stock::findOrFail($id);
-        return response()->json($stock);
-    }
-
-    // Update Stock
-    public function update(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|numeric|min:1',
-            'stock_type' => 'required|in:in,out',
+        $request->validate([
+            'transaction_date' => 'nullable|date',
+            'products' => 'required|array',
+            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()]);
-        }
+        $transactionDate = $request->transaction_date ?? now();
 
-        $stock = Stock::findOrFail($id);
+        DB::beginTransaction();
 
-        // ❗ Stock Out validation
-        if ($request->stock_type === 'out') {
-            $in = Stock::where('product_id', $request->product_id)->where('stock_type', 'in')->sum('quantity');
-            $out = Stock::where('product_id', $request->product_id)->where('stock_type', 'out')->where('id', '!=', $id)->sum('quantity');
-            $currentStock = $in - $out;
+        try {
+            $datePrefix = 'IN' . date('Ym', strtotime($transactionDate));
 
-            if ($request->quantity > $currentStock) {
-                return response()->json([
-                    'errors' => ['quantity' => ['Not enough stock!']]
+            $lastVoucher = StockTransaction::where('voucher_no', 'like', $datePrefix . '%')
+                ->orderBy('voucher_no', 'desc')
+                ->first();
+
+            if ($lastVoucher) {
+                $lastSerial = (int) substr($lastVoucher->voucher_no, -5);
+                $newSerial = str_pad($lastSerial + 1, 5, '0', STR_PAD_LEFT);
+            } else {
+                $newSerial = '0001';
+            }
+
+            $voucherNo = $datePrefix . $newSerial;
+
+            foreach ($request->products as $item) {
+
+                $product = Product::lockForUpdate()->findOrFail($item['product_id']);
+
+                $prevStock = $product->total_stock ?? 0;
+                $qty = (int)$item['quantity'];
+                $newStock = $prevStock + $qty;
+
+                $unitPrice = $item['price'] ?? $product->product_price ?? 0;
+                $totalPrice = $unitPrice * $qty;
+
+                StockTransaction::create([
+                    'voucher_no'     => $voucherNo,
+                    'product_id'     => $product->id,
+                    'type'           => 'in',
+                    'previous_stock' => $prevStock,
+                    'quantity'       => $qty,
+                    'current_stock'  => $newStock,
+                    'total_price'    => $totalPrice,
+                    'in_date'        => $transactionDate,
+                    'note'           => 'Stock In',
+                ]);
+
+                $product->update([
+                    'total_stock' => $newStock
                 ]);
             }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'voucher' => $voucherNo,
+                'redirect' => route('stock.invoice', $voucherNo)
+            ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json([
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ]);
         }
-
-        $stock->update([
-            'product_id' => $request->product_id,
-            'quantity' => $request->quantity,
-            'stock_type' => $request->stock_type,
-            'note' => $request->note,
-        ]);
-
-        $stock->load('product');
-
-        return response()->json([
-            'success' => 'Stock updated successfully!',
-            'stock' => $stock
-        ]);
     }
 
-    // Delete Stock
-    public function destroy($id)
+    public function invoice($voucher)
     {
-        $stock = Stock::find($id);
-        if ($stock) {
-            $stock->delete();
-            return response()->json(['success' => 'Stock deleted successfully']);
-        }
-        return response()->json(['error' => 'Stock not found'], 404);
+        $transactions = StockTransaction::with('product')
+            ->where('voucher_no', $voucher)
+            ->get();
+
+        $grandTotal = $transactions->sum('total_price');
+
+        $comapnyInfo = SystemSetting::first(); // Assuming you have company info in system settings
+
+        return view('backend.admin.stock.invoice', compact(
+            'transactions',
+            'voucher',
+            'grandTotal',
+            'comapnyInfo'
+        ));
     }
 
-    // Product-wise Stock History
-    public function logs($productId)
+
+    public function stockOutIndex()
     {
-        $logs = Stock::where('product_id', $productId)->latest()->get();
-        return response()->json($logs);
+        $products = Product::all();
+        return view('backend.admin.stock.stockOut', compact('products'));
+    }
+
+
+    public function stockOut(Request $request)
+    {
+        $request->validate([
+            'transaction_date' => 'nullable|date',
+            'products' => 'required|array',
+            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
+        ]);
+
+        $transactionDate = $request->transaction_date ?? now();
+
+        DB::beginTransaction();
+
+        try {
+            // 🔥 Step 1: Voucher Generate (OUT prefix)
+            $datePrefix = 'OUT' . date('Ym', strtotime($transactionDate));
+
+            $lastVoucher = StockTransaction::where('voucher_no', 'like', $datePrefix . '%')
+                ->orderBy('voucher_no', 'desc')
+                ->first();
+
+            if ($lastVoucher) {
+                $lastSerial = (int) substr($lastVoucher->voucher_no, -5);
+                $newSerial = str_pad($lastSerial + 1, 5, '0', STR_PAD_LEFT);
+            } else {
+                $newSerial = '0001';
+            }
+
+            $voucherNo = $datePrefix . $newSerial;
+
+            // 🔥 Step 2: Loop Products
+            foreach ($request->products as $item) {
+
+                $product = Product::lockForUpdate()->findOrFail($item['product_id']);
+
+                $prevStock = (int) ($product->total_stock ?? 0);
+                $qty = (int) $item['quantity'];
+
+                // ❗ Stock validation
+                if ($qty > $prevStock) {
+                    throw new \Exception("Stock not enough for {$product->name}");
+                }
+
+                $newStock = $prevStock - $qty;
+
+                $unitPrice = (float) ($item['price'] ?? $product->sale_price ?? 0);
+                $totalPrice = $unitPrice * $qty;
+
+                StockTransaction::create([
+                    'voucher_no'     => $voucherNo, // ✅ Added
+                    'product_id'     => $product->id,
+                    'type'           => 'out',
+                    'previous_stock' => $prevStock,
+                    'quantity'       => $qty,
+                    'current_stock'  => $newStock,
+                    'total_price'    => $totalPrice,
+                    'in_date'        => $transactionDate,
+                    'note'           => 'Stock Out',
+                ]);
+
+                $product->total_stock = $newStock;
+                $product->save();
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'voucher' => $voucherNo,
+                'redirect' => route('stockOut.invoice', $voucherNo)
+            ]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function stockOutinvoice($voucher)
+    {
+        $transactions = StockTransaction::with('product')
+            ->where('voucher_no', $voucher)
+            ->get();
+
+        $grandTotal = $transactions->sum('total_price');
+
+        $comapnyInfo = SystemSetting::first(); // Assuming you have company info in system settings
+
+        return view('backend.admin.stock.stockOutInvoice', compact(
+            'transactions',
+            'voucher',
+            'grandTotal',
+            'comapnyInfo'
+        ));
+    }
+
+
+    public function stockReturnIndex()
+    {
+        $products = Product::all();
+        return view('backend.admin.stock.return', compact('products'));
+    }
+
+    public function stockReturn(Request $request)
+    {
+        $request->validate([
+            'transaction_date' => 'nullable|date',
+            'products' => 'required|array',
+            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
+        ]);
+
+        $transactionDate = $request->transaction_date ?? now();
+
+        DB::beginTransaction();
+
+        try {
+            // 🔥 Step 1: Voucher Generate (RET prefix)
+            $datePrefix = 'RET' . date('Ym', strtotime($transactionDate));
+
+            $lastVoucher = StockTransaction::where('voucher_no', 'like', $datePrefix . '%')
+                ->orderBy('voucher_no', 'desc')
+                ->first();
+
+            $newSerial = $lastVoucher
+                ? str_pad((int) substr($lastVoucher->voucher_no, -5) + 1, 5, '0', STR_PAD_LEFT)
+                : '00001';
+
+            $voucherNo = $datePrefix . $newSerial;
+
+            // 🔥 Step 2: Loop Products
+            foreach ($request->products as $item) {
+                $product = Product::lockForUpdate()->findOrFail($item['product_id']);
+
+                $prevStock = (int) ($product->total_stock ?? 0);
+                $qty = (int) $item['quantity'];
+
+                // 👉 Stock increase for return
+                $newStock = $prevStock + $qty;
+
+                // Unit price stays positive, but total_price should be negative
+                $unitPrice = (float) ($item['price'] ?? $product->product_price ?? 0);
+                $totalPrice = -1 * $unitPrice * $qty; // ❌ negative
+
+                StockTransaction::create([
+                    'voucher_no'     => $voucherNo,
+                    'product_id'     => $product->id,
+                    'type'           => StockTransaction::TYPE_RETURN,
+                    'previous_stock' => $prevStock,
+                    'quantity'       => $qty,
+                    'current_stock'  => $newStock,
+                    'total_price'    => $totalPrice, // negative
+                    'in_date'        => $transactionDate,
+                    'note'           => 'Stock Return',
+                ]);
+
+                // Update product stock
+                $product->total_stock = $newStock;
+                $product->save();
+            }
+
+            DB::commit();
+            return back()->with('success', 'Stock Returned Successfully. Voucher: ' . $voucherNo);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', 'Something went wrong! ' . $e->getMessage());
+        }
+    }
+    public function stockReport(Request $request)
+    {
+        $products = Product::all(); // filter dropdown
+
+        // Query builder
+        $query = StockTransaction::with('product')->orderBy('in_date', 'desc');
+
+        // Filter by product
+        if ($request->filled('product_id')) {
+            $query->where('product_id', $request->product_id);
+        }
+
+        // Filter by type
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        // Filter by date range
+        if ($request->filled('start_date')) {
+            $query->whereDate('in_date', '>=', $request->start_date);
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('in_date', '<=', $request->end_date);
+        }
+
+        // 🔍 Filter by voucher_no
+        if ($request->filled('voucher_no')) {
+            $query->where('voucher_no', 'like', '%' . $request->voucher_no . '%');
+        }
+
+        $transactions = $query->paginate(50)->withQueryString();
+
+        return view('backend.admin.stock.report', compact('transactions', 'products'));
+    }
+
+
+
+    public function allindex(Request $request)
+    {
+        $query = Product::with(['category', 'brand']);
+
+        // Apply filters if present in query params
+        if ($request->category_id) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->brand_id) {
+            $query->where('brand_id', $request->brand_id);
+        }
+
+        if ($request->product_id) {
+            $query->where('id', $request->product_id);
+        }
+
+        $products = $query->latest()->get();
+
+        $categories = \App\Models\Category::all();
+        $brands = \App\Models\Brand::all();
+
+        return view('backend.admin.stock.allstockindex', compact('products', 'categories', 'brands'));
     }
 }

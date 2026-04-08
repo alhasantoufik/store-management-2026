@@ -181,11 +181,11 @@
     }
 </style>
 <div class="container-fluid mt-4">
-    <form id="stockForm" action="{{ route('stock.in') }}" method="POST">
+    <form action="{{ route('stock.out') }}" method="POST">
         @csrf
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center bg-white py-3">
-                <h4 class="mb-0">Stock Entry (Stock In)</h4>
+                <h4 class="mb-0">Stock Entry (Stock Out)</h4>
                 <div class="d-flex gap-2">
                     <div class="input-group" style="width: 220px;">
                         <span class="input-group-text bg-light"><i class="fas fa-calendar-alt"></i></span>
@@ -230,8 +230,8 @@
 
                 <div class="text-end mt-4">
                     <hr>
-                    <button type="submit" class="btn btn-success btn-lg px-5 shadow-sm">
-                        <i class="fas fa-save me-1"></i> Stock In
+                    <button type="submit" class="btn btn-danger btn-lg px-5 shadow-sm">
+                        <i class="fas fa-minus-circle me-1"></i> Stock Out
                     </button>
                 </div>
             </div>
@@ -241,23 +241,21 @@
 @endsection
 
 @push('scripts')
-
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 <script>
     let rowCount = 0;
 
     $(document).ready(function() {
         // Initialize Select2
-        if ($.isFunction($.fn.select2)) {
-            $('.select2').select2({
-                placeholder: "Search Products",
-                allowClear: true,
-                theme: 'bootstrap-5' // Omit if not using Bootstrap 5 theme for Select2
-            });
-        }
+        $('.select2').select2({
+            placeholder: "Search Products",
+            allowClear: true,
+            theme: 'bootstrap-5'
+        });
 
-        // 1. Add row when product is selected
+        // ১. প্রোডাক্ট সিলেক্ট করলে রো অ্যাড করা
         $('#mainProductSelect').on('change', function() {
             let productId = $(this).val();
             let productName = $("#mainProductSelect option:selected").text();
@@ -279,72 +277,91 @@
                 $(this).val(null).trigger('change');
             }
         });
+
+        // ২. ফর্ম সাবমিট লজিক (AJAX)
+        $('form').on('submit', function(e) {
+            e.preventDefault(); // পেজ রিলোড আটকানো
+
+            let form = $(this);
+            let submitBtn = form.find('button[type="submit"]');
+
+            // রো চেক করা
+            if ($('.row-product-id').length === 0) {
+                alert('Please add at least one product!');
+                return;
+            }
+
+            submitBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+
+            $.ajax({
+                url: form.attr('action'),
+                method: "POST",
+                data: form.serialize(),
+                success: function(response) {
+                    if(response.status === 'success') {
+                        // ইনভয়েস পেজে নিয়ে যাওয়া (সেখান থেকে প্রিন্ট হয়ে অটো ব্যাক করবে)
+                        window.location.href = response.redirect;
+                    }
+                },
+                error: function(xhr) {
+                    submitBtn.prop('disabled', false).html('<i class="fas fa-minus-circle me-1"></i> Stock Out');
+                    let errorMsg = xhr.responseJSON ? xhr.responseJSON.message : "Something went wrong!";
+                    alert("Error: " + errorMsg);
+                }
+            });
+        });
     });
 
-    // 2. Add Row Function
+    // ৩. নতুন রো তৈরি করার ফাংশন
     function addNewRow(productId, productName) {
         let row = `
-    <tr id="row_${rowCount}" class="align-middle">
-        <td data-label="Product">
-            <input type="hidden" name="products[${rowCount}][product_id]" value="${productId}" class="row-product-id">
-            <span class="fw-bold text-dark">${productName}</span>
-        </td>
-        <td data-label="Current Stock" class="currentStockText text-center text-muted">Loading...</td>
-        <td data-label="Quantity">
-            <input type="number" name="products[${rowCount}][quantity]" class="form-control qty shadow-sm" 
-                   placeholder="Qty" min="1" required style="max-width: 120px; margin-left: auto;">
-        </td>
-        <td data-label="Unit Price">
-    <input type="number" step="0.01" 
-        name="products[${rowCount}][price]" 
-        class="form-control unitPriceInput shadow-sm text-end"
-        placeholder="0.00" 
-        style="max-width: 120px; margin-left: auto;">
-</td>
-        <td data-label="Total Price" class="totalPriceText text-end fw-bold">0.00</td>
-        <td data-label="New Stock" class="newStockText text-center font-weight-bold text-primary">0</td>
-        <td class="text-center">
-            <button type="button" class="btn btn-sm btn-outline-danger removeRow px-2">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </td>
-    </tr>`;
+        <tr id="row_${rowCount}" class="align-middle">
+            <td data-label="Product">
+                <input type="hidden" name="products[${rowCount}][product_id]" value="${productId}" class="row-product-id">
+                <span class="fw-bold text-dark">${productName}</span>
+            </td>
+            <td data-label="Current Stock" class="currentStockText text-center text-muted">Loading...</td>
+            <td data-label="Quantity">
+                <input type="number" name="products[${rowCount}][quantity]" class="form-control qty shadow-sm" 
+                       placeholder="Qty" min="1" required style="max-width: 120px; margin-left: auto;">
+            </td>
+            <td data-label="Unit Price">
+                <input type="number" step="0.01" name="products[${rowCount}][price]"
+                       class="form-control unitPriceInput text-end shadow-sm"
+                       placeholder="0.00" style="max-width: 120px; margin-left: auto;">
+            </td>
+            <td data-label="Total Price" class="totalPriceText text-end fw-bold">0.00</td>
+            <td data-label="New Stock" class="newStockText text-center font-weight-bold text-primary">0</td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-outline-danger removeRow px-2">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            </td>
+        </tr>`;
 
         $('#stockTable tbody').append(row);
         fetchProductData(productId, $(`#row_${rowCount}`));
         rowCount++;
     }
 
-    // 3. AJAX for Product Info
+    // ৪. প্রোডাক্ট ডাটা নিয়ে আসা (Stock & Price)
     function fetchProductData(productId, row) {
         let url = "{{ route('admin.product.info', ':id') }}".replace(':id', productId);
-
-        $.ajax({
-            url: url,
-            type: 'GET',
-            dataType: 'json',
-            success: function(data) {
-                row.find('.currentStockText').text(data.stock || 0);
-
-                // ✅ FIXED HERE
-                row.find('.unitPriceInput').val(data.price || 0);
-
-                row.data('stock', data.stock || 0);
-                calculateRow(row);
-            }
+        $.get(url, function(data) {
+            row.find('.currentStockText').text(data.stock || 0);
+            row.find('.unitPriceInput').val(data.sale_price || 0);
+            row.data('stock', data.stock || 0);
+            calculateRow(row);
         });
     }
 
-    // 4. Remove Row
+    // ৫. ক্যালকুলেশন এবং রো রিমুভ
     $(document).on('click', '.removeRow', function() {
         $(this).closest('tr').remove();
-        if ($('#stockTable tbody tr').length === 0) {
-            $('#emptyMsg').show();
-        }
+        if ($('#stockTable tbody tr').length === 0) $('#emptyMsg').show();
     });
 
-    // 5. Calculation
-    $(document).on('input', '.qty', function() {
+    $(document).on('input', '.qty, .unitPriceInput', function() {
         calculateRow($(this).closest('tr'));
     });
 
@@ -353,69 +370,16 @@
         let currentStock = parseFloat(row.data('stock')) || 0;
         let unitPrice = parseFloat(row.find('.unitPriceInput').val()) || 0;
 
-        let newStock = currentStock + qty;
+        if (qty > currentStock) {
+            alert("Warning: Stock exceeded for this product!");
+            // row.find('.qty').val(currentStock); // অপশনাল: অটো স্টক সমান করে দিবে
+        }
+
+        let newStock = currentStock - qty;
         let totalPrice = unitPrice * qty;
 
         row.find('.newStockText').text(newStock);
-        row.find('.totalPriceText').text(totalPrice.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }));
+        row.find('.totalPriceText').text(totalPrice.toFixed(2));
     }
-    $(document).on('input', '.unitPriceInput', function() {
-        calculateRow($(this).closest('tr'));
-    });
-
-    $('#stockForm').on('submit', function(e) {
-        e.preventDefault();
-
-        let formData = $(this).serialize();
-
-        let printWindow = window.open('', '_blank');
-
-        $.ajax({
-            url: "{{ route('stock.in') }}",
-            method: "POST",
-            data: formData,
-            success: function(res) {
-
-                if (res.status === 'success') {
-
-                    // popup load
-                    printWindow.location.href = res.redirect;
-
-                    // reset UI
-                    $('#stockForm')[0].reset();
-                    $('#stockTable tbody').html('');
-                    $('#emptyMsg').show();
-                }
-            },
-            error: function() {
-                alert('Error!');
-            }
-        });
-    });
 </script>
-
-<style>
-    .input-group-text {
-        border-right: none;
-    }
-
-    #transaction_date {
-        border-left: none;
-    }
-
-    .table th {
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 12px;
-        letter-spacing: 0.5px;
-    }
-
-    .removeRow:hover {
-        background-color: #dc3545;
-        color: white;
-    }
-</style>
 @endpush

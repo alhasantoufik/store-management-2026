@@ -2,47 +2,64 @@
 @section('title', 'Category List')
 @section('page-content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold text-dark m-0">Category List</h3>
+   <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-dark">Category List</h5>
+        <button class="btn btn-success btn-sm px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#addModal">
+            <i class="fas fa-plus-circle me-1"></i> Add Category
+        </button>
+    </div>
 
-    <button class="btn btn-success px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#addModal">
-        <i class="fas fa-plus-circle me-1"></i> Add Category
-    </button>
-</div>
-    <div class="table-responsive">
-        <table class="table table-bordered">
-            <thead class="table-light">
-                <tr>
-                    <th>SL</th>
-                    <th>Title</th>
-                    <th>Image</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody id="categoryTable">
-                @foreach($categories as $key => $cat)
-                <tr data-id="{{ $cat->id }}">
-                    <td>{{ $key+1 }}</td>
-                    <td>{{ $cat->title }}</td>
-                    <td>
-                        @if($cat->image)
-                        <img src="{{ asset('uploads/category/'.$cat->image) }}" width="50" alt="{{ $cat->title }}">
-                        @endif
-                    </td>
-                    <td>
-                        <span class="badge {{ $cat->status ? 'bg-success' : 'bg-secondary' }}">
-                            {{ $cat->status ? 'Active' : 'Inactive' }}
-                        </span>
-                    </td>
-                    <td>
-                        <button class="btn btn-warning btn-sm editBtn" data-id="{{ $cat->id }}">Edit</button>
-                        <button class="btn btn-danger btn-sm deleteBtn" data-id="{{ $cat->id }}">Delete</button>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3" style="width: 60px;">SL</th>
+                        <th>Title</th>
+                        <th>Image</th>
+                        <th>Status</th>
+                        <th class="text-end pe-3">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="categoryTable">
+                    @foreach($categories as $key => $cat)
+                    <tr data-id="{{ $cat->id }}">
+                        <td class="ps-3 text-muted">{{ $key + 1 }}</td>
+                        <td class="fw-bold text-secondary">{{ $cat->title }}</td>
+                        <td>
+                            @if($cat->image)
+                                <img src="{{ asset('uploads/category/'.$cat->image) }}" 
+                                     class="rounded border shadow-sm" 
+                                     style="width: 45px; height: 45px; object-fit: cover;" 
+                                     alt="{{ $cat->title }}">
+                            @else
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center border" style="width: 45px; height: 45px;">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="badge rounded-pill {{ $cat->status ? 'bg-light text-success border border-success' : 'bg-light text-secondary border' }}">
+                                <i class="fas fa-circle me-1" style="font-size: 8px;"></i>
+                                {{ $cat->status ? 'Active' : 'Inactive' }}
+                            </span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group">
+                                <button class="btn btn-outline-warning btn-sm editBtn" data-id="{{ $cat->id }}" title="Edit">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm deleteBtn" data-id="{{ $cat->id }}" title="Delete">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 

@@ -9,8 +9,38 @@
                 <li class="{{ request()->routeIs(['admin.dashboard']) ? 'mm-active' : '' }}">
                     <a href="{{ route('admin.dashboard') }}" class="waves-effect">
                         <i class="fas fa-home"></i>
-                        <span>ড্যাশবোর্ড</span>
+                        <span>Dashboard</span>
                     </a>
+                </li>
+
+
+                <li class="{{ request()->routeIs([
+                        'stock.index',
+                        'stockOut.index',
+                        'stockReturn.index',
+                        'stock.report'
+                    ]) ? 'mm-active sidebarParentActive' : '' }}">
+                    <a href="javascript:void(0);" class="has-arrow waves-effect">
+                        <i class="fas fa-boxes"></i>
+                        <span>Stock</span>
+                    </a>
+                    <ul class="sub-menu">
+                        <li class="{{ request()->routeIs('stock.index') ? 'mm-active' : '' }}">
+                            <a href="{{ route('stock.index') }}">Stock In</a>
+                        </li>
+                        <li class="{{ request()->routeIs('stockOut.index') ? 'mm-active' : '' }}">
+                            <a href="{{ route('stockOut.index') }}">Stock Out</a>
+                        </li>
+                        <li class="{{ request()->routeIs('stockReturn.index') ? 'mm-active' : '' }}">
+                            <a href="{{ route('stockReturn.index') }}">Stock Return</a>
+                        </li>
+                          <li class="{{ request()->routeIs('admin.stocks.index') ? 'mm-active' : '' }}">
+                            <a href="{{ route('admin.stocks.index') }}">All Stock</a>
+                        </li>
+                        <li class="{{ request()->routeIs('stock.report') ? 'mm-active' : '' }}">
+                            <a href="{{ route('stock.report') }}">Stock Report</a>
+                        </li>
+                    </ul>
                 </li>
 
                 <li class="{{ request()->routeIs(['products.index']) ? 'mm-active' : '' }}">
@@ -19,16 +49,6 @@
                         <span>Products</span>
                     </a>
                 </li>
-
-
-                <li class="{{ request()->routeIs(['stocks.index']) ? 'mm-active' : '' }}">
-                    <a href="{{ route('stocks.index') }}" class="waves-effect">
-                        <i class="fas fa-list-ul"></i>
-                        <span>Stocks In</span>
-                    </a>
-                </li>
-
-             
 
 
                 <li class="{{ request()->routeIs(['categories.index']) ? 'mm-active' : '' }}">
@@ -45,19 +65,46 @@
                     </a>
                 </li>
 
+
+
+                <li class="{{ request()->routeIs('cost.*') ? 'mm-active sidebarParentActive' : '' }}">
+                    <a href="javascript:void(0);" class="has-arrow waves-effect">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Expense</span>
+                    </a>
+                    <ul class="sub-menu">
+                        <li><a href="{{ route('cost.category.index') }}">Categories</a></li>
+                        <li><a href="{{ route('cost.index') }}">Add Expense</a></li>
+                        <li><a href="{{ route('cost.all') }}">All Expenses / Report</a></li>
+                    </ul>
+                </li>
+
+                <li class="{{ request()->routeIs(['profit.report']) ? 'mm-active' : '' }}">
+                    <a href="{{ route('profit.report') }}" class="waves-effect">
+                        <i class="fas fa-list-ul"></i>
+                        <span>Profit Report</span>
+                    </a>
+                </li>
+                <li class="{{ request()->routeIs(['cashbook.index']) ? 'mm-active' : '' }}">
+                    <a href="{{ route('cashbook.index') }}" class="waves-effect">
+                        <i class="fas fa-list-ul"></i>
+                        <span>CashBook</span>
+                    </a>
+                </li>
+
                 <li class="{{ request()->routeIs('admin.admins.*') ? 'mm-active sidebarParentActive' : '' }}">
                     <a href="javascript:void(0);" class="has-arrow waves-effect">
                         <i class="fas fa-user-shield"></i>
-                        <span>অ্যাডমিন</span>
+                        <span>Admin</span>
                     </a>
                     <ul class="sub-menu">
 
 
-                        <li><a href="{{ route('admin.admins.create') }}">নতুন অ্যাডমিন</a></li>
+                        <li><a href="{{ route('admin.admins.create') }}">New Admin</a></li>
 
 
 
-                        <li><a href="{{ route('admin.admins.index') }}">সকল অ্যাডমিন</a></li>
+                        <li><a href="{{ route('admin.admins.index') }}">All Admins</a></li>
 
 
                     </ul>
@@ -69,26 +116,26 @@
                 <li class="{{ request()->routeIs('admin.sms.*') ? 'mm-active' : '' }}">
                     <a href="javascript:void(0);" class="has-arrow waves-effect">
                         <i class="fas fa-sms"></i>
-                        <span>এসএমএস সিস্টেম</span>
+                        <span>SMS System</span>
                     </a>
                     <ul class="sub-menu">
 
                         <li class="{{ request()->routeIs('admin.sms.summary') ? 'mm-active' : '' }}">
                             <a href="{{ route('admin.sms.summary') }}">
-                                সেন্ট এসএমএস
+                                Sent SMS
                             </a>
                         </li>
 
                         <li class="{{ request()->routeIs('admin.sms.send') ? 'mm-active' : '' }}">
                             <a href="{{ route('admin.sms.send') }}">
-                                এসএমএস সামারি
+                                SMS Summary
                             </a>
                         </li>
 
                         @if(auth()->check() && auth()->user()->name === 'Developer' && auth()->user()->role === 'admin')
                         <li class="{{ request()->routeIs('admin.sms.module') ? 'mm-active' : '' }}">
                             <a href="{{ route('admin.sms.module') }}">
-                                এসএমএস লিমিট
+                                SMS Limit
                             </a>
                         </li>
                         @endif
@@ -102,13 +149,13 @@
                 <li class="{{ request()->routeIs(['profile.setting', 'system.index']) ? 'mm-active sidebarParentActive' : '' }}">
                     <a href="javascript:void(0);" class="has-arrow waves-effect">
                         <i class="fas fa-cog"></i>
-                        <span>সেটিংস</span>
+                        <span>Settings</span>
                     </a>
                     <ul class="sub-menu">
 
 
-                        <li><a href="{{ route('profile.setting') }}">প্রোফাইল সেটিংস</a></li>
-                        <li><a href="{{ route('system.index') }}">সিস্টেম সেটিংস</a></li>
+                        <li><a href="{{ route('profile.setting') }}">Profile Settings</a></li>
+                        <li><a href="{{ route('system.index') }}">System Settings</a></li>
 
 
                     </ul>
