@@ -193,3 +193,24 @@ Route::prefix('admin')->group(function () {
     Route::post('/stock-out/update/{id}', [StockController::class, 'updateStockOut'])->name('stock.out.update');
     Route::delete('/stock-out/delete/{id}', [StockController::class, 'deleteStockOut'])->name('stock.out.delete');
 });
+
+
+Route::get('admin/stock-return/all', [StockController::class, 'allStockReturns'])->name('stockReturn.all');
+
+
+// routes/web.php
+Route::prefix('admin/stock-return')->name('stockReturn.')->group(function () {
+    Route::get('all', [StockController::class, 'allStockReturns'])->name('all');
+    Route::get('edit/{id}', [StockController::class, 'allreturnedit'])->name('edit');
+    Route::put('update/{id}', [StockController::class, 'allreturnupdate'])->name('update');
+    Route::delete('delete/{id}', [StockController::class, 'allreturndestroy'])->name('delete');
+});
+
+
+
+
+Route::get('stock-in/{voucher_no}', [StockController::class, 'inshow'])->name('stock.in.show');
+
+Route::get('stock-out/{voucher_no}', [StockController::class, 'outshow'])->name('stock.out.show');
+
+Route::get('stock-return/{voucher_no}', [StockController::class, 'returnshow'])->name('stockReturn.show');

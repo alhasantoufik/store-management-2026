@@ -258,6 +258,21 @@ class StockController extends Controller
         return view('backend.admin.stock.stockout.index', compact('stockOuts'));
     }
 
+    public function outshow($voucherNo)
+{
+    // Get all stock out items for this voucher
+    $stockItems = StockTransaction::with('product')
+        ->where('type', StockTransaction::TYPE_OUT)
+        ->where('voucher_no', $voucherNo)
+        ->get();
+
+    if ($stockItems->isEmpty()) {
+        return redirect()->back()->with('error', 'No stock out found for this voucher.');
+    }
+
+    return view('backend.admin.stock.stockout.show', compact('stockItems', 'voucherNo'));
+}
+
     // Edit stock-out transaction
     public function editStockOut($voucher_no)
     {
@@ -349,6 +364,7 @@ class StockController extends Controller
         return view('backend.admin.stock.return', compact('products'));
     }
 
+
     public function stockReturn(Request $request)
     {
         $request->validate([
@@ -414,6 +430,128 @@ class StockController extends Controller
             return back()->with('error', 'Something went wrong! ' . $e->getMessage());
         }
     }
+
+
+
+
+    public function allStockReturns(Request $request)
+    {
+        $query = StockTransaction::where('type', StockTransaction::TYPE_RETURN)
+            ->selectRaw('voucher_no, SUM(quantity) as total_qty, SUM(total_price) as total_price, MAX(in_date) as in_date')
+            ->groupBy('voucher_no');
+
+        // Filter by voucher_no (live search)
+        if ($request->filled('voucher_no')) {
+            $voucher = $request->voucher_no;
+            $query->where('voucher_no', 'like', "%{$voucher}%");
+        }
+
+        // Filter by date range
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $start = $request->start_date;
+            $end = $request->end_date;
+            $query->whereBetween('in_date', [$start, $end]);
+        }
+
+        $returns = $query->orderBy('in_date', 'desc')->get();
+
+        return view('backend.admin.stock.stockreturn.index', compact('returns'));
+    }
+
+    public function returnshow($voucherNo)
+{
+    // Get all stock return items for this voucher
+    $stockItems = StockTransaction::with('product')
+        ->where('type', StockTransaction::TYPE_RETURN)
+        ->where('voucher_no', $voucherNo)
+        ->get();
+
+    if ($stockItems->isEmpty()) {
+        return redirect()->back()->with('error', 'No stock return found for this voucher.');
+    }
+
+    return view('backend.admin.stock.stockreturn.show', compact('stockItems', 'voucherNo'));
+}
+
+    public function allreturnedit($voucher_no)
+    {
+        // Get all returns with this voucher
+        $returns = StockTransaction::where('voucher_no', $voucher_no)
+            ->where('type', StockTransaction::TYPE_RETURN)
+            ->with('product')
+            ->get();
+
+        $products = Product::all();
+
+        return view('backend.admin.stock.stockreturn.edit', compact('returns', 'products', 'voucher_no'));
+    }
+
+
+    public function allreturnupdate(Request $request, $voucher_no)
+    {
+        $request->validate([
+            'products.*.id'        => 'required|exists:stock_transactions,id',
+            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.quantity'  => 'required|integer|min:1',
+            'products.*.price'     => 'required|numeric|min:0',
+            'in_date'              => 'required|date',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            foreach ($request->products as $item) {
+                $return = StockTransaction::findOrFail($item['id']);
+                $product = Product::lockForUpdate()->findOrFail($item['product_id']);
+
+                // Revert previous stock
+                $product->total_stock -= $return->quantity;
+
+                // Apply new stock
+                $product->total_stock += $item['quantity'];
+
+                $return->update([
+                    'product_id'    => $item['product_id'],
+                    'quantity'      => $item['quantity'],
+                    'total_price'   => -1 * $item['price'] * $item['quantity'], // negative for return
+                    'current_stock' => $product->total_stock,
+                    'in_date'       => $request->in_date,
+                ]);
+
+                $product->save();
+            }
+
+            DB::commit();
+            return redirect()->route('stockReturn.all')->with('success', 'All Stock Returns Updated Successfully!');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', 'Something went wrong! ' . $e->getMessage());
+        }
+    }
+
+
+    public function allreturndestroy($id)
+    {
+        DB::beginTransaction();
+        try {
+            $return = StockTransaction::findOrFail($id);
+            $product = Product::lockForUpdate()->findOrFail($return->product_id);
+
+            // Revert stock
+            $product->total_stock -= $return->quantity;
+            $product->save();
+
+            $return->delete();
+
+            DB::commit();
+            return redirect()->route('stockReturn.all')->with('success', 'Stock Return Deleted Successfully!');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', 'Something went wrong! ' . $e->getMessage());
+        }
+    }
+
+
+
 
 
     public function stockReport(Request $request)
@@ -495,6 +633,21 @@ class StockController extends Controller
             ->get();
 
         return view('backend.admin.stock.stockin.stock_in', compact('stockIns'));
+    }
+
+    public function inshow($voucherNo)
+    {
+        // Get all stock in items for this voucher
+        $stockItems = StockTransaction::with('product')
+            ->where('type', StockTransaction::TYPE_IN)
+            ->where('voucher_no', $voucherNo)
+            ->get();
+
+        if ($stockItems->isEmpty()) {
+            return redirect()->back()->with('error', 'No stock found for this voucher.');
+        }
+
+        return view('backend.admin.stock.stockin.show', compact('stockItems', 'voucherNo'));
     }
 
     public function stockInSearch(Request $request)

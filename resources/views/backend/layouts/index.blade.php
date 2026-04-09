@@ -68,6 +68,7 @@
                             <div>
                                 <h1 class="fw-bold">{{ $today_stock_in }}</h1>
                                 <h5 class="text-muted">Today's Stock In</h5>
+                                <h6 class="text-muted">Total Cost: {{ number_format($todayStockInCost, 2) }} Tk.</h6>
                             </div>
                             <div>
                                 <i class="fas fa-boxes fa-3x text-success"></i>
@@ -85,6 +86,7 @@
                             <div>
                                 <h1 class="fw-bold">{{ $today_stock_out }}</h1>
                                 <h5 class="text-muted">Today's Stock Out</h5>
+                                <h6 class="text-muted">Total Price: {{ number_format($todayStockOutCost, 2) }} Tk.</h6>
                             </div>
                             <div>
                                 <i class="fas fa-truck fa-3x text-danger"></i>
@@ -102,6 +104,7 @@
                             <div>
                                 <h1 class="fw-bold">{{ $today_stock_return }}</h1>
                                 <h5 class="text-muted">Today's Stock Return</h5>
+                                <h6 class="text-muted">Total Price: {{ number_format($todayStockReturnCost, 2) }} ৳</h6>
                             </div>
                             <div>
                                 <i class="fas fa-undo fa-3x text-warning"></i>
@@ -116,7 +119,7 @@
                 <div class="card shadow-sm dashboard-card">
                     <div class="card-body d-flex justify-content-between">
                         <div>
-                            <h1 class="fw-bold">{{ number_format($todayStockInCost, 2) }} Tk.</h1>
+                            <h1 class="fw-bold">{{ number_format($todayStockInCost + $todayStockReturnCost, 2) }} Tk.</h1>
                             <h5 class="text-muted">Today's Total Cost</h5>
                         </div>
                         <div>
@@ -126,11 +129,13 @@
                 </div>
             </div>
 
+
+
             <div class="col-md-3 mt-4">
                 <div class="card shadow-sm dashboard-card">
                     <div class="card-body d-flex justify-content-between">
                         <div>
-                            <h1 class="fw-bold">{{ number_format($todayProfit, 2) }} Tk.</h1>
+                            <h1 class="fw-bold">{{ number_format($todayBalance, 2) }} Tk.</h1>
                             <h5 class="text-muted">Today's Balance</h5>
                         </div>
                         <div>

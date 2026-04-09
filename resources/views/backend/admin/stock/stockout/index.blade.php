@@ -4,7 +4,7 @@
 
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4>Stock Out List</h4>
+        <h4 class="mb-0">Stock Out List</h4>
     </div>
 
     @if(session('success'))
@@ -16,72 +16,82 @@
 
     <div class="card shadow-sm">
         <div class="card-body">
-            <div class="row mb-3">
+            <div class="row mb-4">
                 <div class="col-md-12">
                     <form method="GET" action="{{ route('stock.out.index') }}" class="row g-2 align-items-end">
-                        <div class="col-md-3">
-                            <label for="voucher_no" class="form-label">Voucher No</label>
+                        <div class="col-md-3 col-sm-6">
+                            <label for="voucher_no" class="form-label fw-bold small">Voucher No</label>
                             <input type="text" name="voucher_no" id="voucher_no" value="{{ request('voucher_no') }}" class="form-control" placeholder="Search by voucher">
                         </div>
 
-                        <div class="col-md-3">
-                            <label for="start_date" class="form-label">Start Date</label>
+                        <div class="col-md-3 col-sm-6">
+                            <label for="start_date" class="form-label fw-bold small">Start Date</label>
                             <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="form-control">
                         </div>
 
-                        <div class="col-md-3">
-                            <label for="end_date" class="form-label">End Date</label>
+                        <div class="col-md-3 col-sm-6">
+                            <label for="end_date" class="form-label fw-bold small">End Date</label>
                             <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="form-control">
                         </div>
 
-                        <div class="col-md-3 d-flex gap-2">
-                            <button type="submit" class="btn btn-primary w-100">Filter</button>
-                            <a href="{{ route('stock.out.index') }}" class="btn btn-secondary w-100">Reset</a>
+                        <div class="col-md-3 col-sm-6 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <a href="{{ route('stock.out.index') }}" class="btn btn-secondary w-100">
+                                <i class="fas fa-undo"></i> Reset
+                            </a>
                         </div>
                     </form>
                 </div>
             </div>
+
             <div class="table-responsive">
                 <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light">
+                    <thead class="table-light text-nowrap">
                         <tr>
                             <th width="50">SL</th>
                             <th>Voucher No</th>
                             <th>Total Quantity</th>
                             <th>Total Price</th>
                             <th>Date</th>
-                            <th width="150" class="text-center">Actions</th>
+                            <th width="160" class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($stockOuts as $key => $stock)
+                        @forelse($stockOuts as $key => $stock)
                         <tr id="row-{{ $stock->voucher_no }}">
                             <td>{{ $key + 1 }}</td>
                             <td><strong>{{ $stock->voucher_no }}</strong></td>
                             <td>{{ $stock->total_quantity }}</td>
                             <td>{{ number_format($stock->total_price, 2) }}</td>
-                            <td>{{ \Carbon\Carbon::parse($stock->in_date)->format('d M, Y') }}</td>
+                            <td class="text-nowrap">{{ \Carbon\Carbon::parse($stock->in_date)->format('d M, Y') }}</td>
                             <td class="text-center">
-                                <a href="{{ route('stock.out.edit', $stock->voucher_no) }}" class="btn btn-sm btn-warning">
-                                    Edit
-                                </a>
-                                <button class="btn btn-sm btn-danger" onclick="deleteStockOut('{{ $stock->voucher_no }}')">
-                                    Delete
-                                </button>
+                                <div class="d-flex justify-content-center gap-1">
+                                    <a href="{{ route('stock.out.show', $stock->voucher_no) }}" class="btn btn-sm btn-info text-white" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ route('stock.out.edit', $stock->voucher_no) }}" class="btn btn-sm btn-warning text-white" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteStockOut('{{ $stock->voucher_no }}')" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="6" class="text-center">No data found</td>
+                        </tr>
+                        @endforelse
                     </tbody>
-                    <tfoot>
-                        <tr class="table-light">
-                            <th colspan="2" class="text-end">Total:</th>
-                            <th>
-                                {{ $stockOuts->sum('total_quantity') }}
-                            </th>
-                            <th>
-                                {{ number_format($stockOuts->sum('total_price'), 2) }}
-                            </th>
-                            <th colspan="2"></th>
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td colspan="2" class="text-end">Total:</td>
+                            <td>{{ $stockOuts->sum('total_quantity') }}</td>
+                            <td>{{ number_format($stockOuts->sum('total_price'), 2) }}</td>
+                            <td colspan="2"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -106,16 +116,20 @@
                     $('#row-' + voucher_no).fadeOut(400, function() {
                         $(this).remove();
                     });
+                },
+                error: function() {
+                    alert('Error deleting the record.');
                 }
             });
         }
     }
-</script>
-<script>
+
+    // Client-side quick search
     $(document).ready(function() {
         $('#voucher_no').on('keyup', function() {
             let value = $(this).val().toLowerCase();
             $('table tbody tr').filter(function() {
+                // index 1 check kore voucher column er jonno
                 $(this).toggle($(this).find('td:eq(1)').text().toLowerCase().indexOf(value) > -1)
             });
         });

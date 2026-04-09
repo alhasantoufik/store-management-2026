@@ -35,7 +35,7 @@
                         </li>
                         <li class="{{ request()->routeIs('stockReturn.index') ? 'mm-active' : '' }}">
                             <a href="{{ route('stockReturn.index') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>Stock Return</a>
-                            <a href="#"><i class='fas fa-greater-than' style='font-size:11px'></i>All Stock Return</a>
+                            <a href="{{ route('stockReturn.all') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>All Stock Return</a>
                         </li>
                         <li class="{{ request()->routeIs('admin.stocks.index') ? 'mm-active' : '' }}">
                             <a href="{{ route('admin.stocks.index') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>All Stock</a>
