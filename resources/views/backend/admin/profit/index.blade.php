@@ -40,6 +40,11 @@
 
     <div class="card border-0 shadow-sm">
         <div class="card-body">
+            <div class="mb-3 text-end">
+                <button class="btn btn-info" onclick="printProfitReport()">
+                    <i class="fas fa-print me-1"></i> Print Report
+                </button>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover table-bordered align-middle">
                     <thead class="table-light">
@@ -54,20 +59,23 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @php 
-                            $totalQty = 0;
-                            $totalSale = 0;
-                            $totalPurchase = 0;
-                            $totalProfit = 0;
+                        @php
+                        $totalQty = 0;
+                        $totalSale = 0;
+                        $totalPurchase = 0;
+                        $totalProfit = 0;
                         @endphp
 
                         @forelse($profits as $item)
-                        @php 
-                            $totalQty += $item->total_qty;
-                            $totalSale += $item->total_sale_price;
-                            $totalPurchase += $item->total_product_price;
-                            $totalProfit += $item->profit;
+                        @php
+                        $totalQty += $item->total_qty;
+                        $totalSale += $item->total_sale_price;
+                        $totalPurchase += $item->total_product_price;
+
+                        // 🔥 FIX: return হলে minus
+                        $totalProfit += ($item->type == 'return') ? -$item->profit : $item->profit;
                         @endphp
+
                         <tr>
                             <td class="text-center">{{ $loop->iteration }}</td>
                             <td class="fw-bold">{{ $item->voucher_no }}</td>
@@ -79,26 +87,28 @@
                                 @endif
                             </td>
                             <td class="text-center">{{ $item->total_qty }}</td>
-                            <td class="text-end">{{ number_format($item->total_sale_price, 2) }}</td>
-                            <td class="text-end">{{ number_format($item->total_product_price, 2) }}</td>
-                            <td class="text-end fw-bold {{ $item->profit >= 0 ? 'text-success' : 'text-danger' }}">
-                                {{ number_format($item->profit, 2) }}
+                            <td class="text-end">{{ number_format($item->total_sale_price, 2) }} Tk.</td>
+                            <td class="text-end">{{ number_format($item->total_product_price, 2) }} Tk.</td>
+                            <td class="text-end fw-bold  
+            {{ $item->type == 'return' ? 'text-warning' : ($item->profit >= 0 ? 'text-success' : 'text-danger') }}">
+                                {{ number_format($item->profit, 2) }} Tk.
                             </td>
                         </tr>
+
                         @empty
                         <tr>
                             <td colspan="7" class="text-center py-4 text-muted">No Data Found</td>
                         </tr>
                         @endforelse
                     </tbody>
-                    
+
                     @if($profits->count() > 0)
                     <tfoot class="table-secondary fw-bold">
                         <tr>
                             <td colspan="3" class="text-end">Grand Total:</td>
                             <td class="text-center">{{ $totalQty }}</td>
-                            <td class="text-end">{{ number_format($totalSale, 2) }}</td>
-                            <td class="text-end">{{ number_format($totalPurchase, 2) }}</td>
+                            <td class="text-end">{{ number_format($totalSale, 2) }} Tk.</td>
+                            <td class="text-end">{{ number_format($totalPurchase, 2) }} Tk.</td>
                             <td class="text-end {{ $totalProfit >= 0 ? 'text-success' : 'text-danger' }}">
                                 {{ number_format($totalProfit, 2) }}
                             </td>
@@ -111,3 +121,43 @@
     </div>
 </div>
 @endsection
+
+
+
+@push('scripts')
+<script>
+    function printProfitReport() {
+        // Table er HTML niye print korbo
+        let printSection = document.querySelector('.table-responsive').innerHTML;
+        let originalContent = document.body.innerHTML;
+
+        document.body.innerHTML = `
+        <html>
+        <head>
+            <title>Profit Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h3 { text-align: center; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+                th { background-color: #f0f0f0; }
+                tfoot td { font-weight: bold; }
+                .text-end { text-align: right; }
+                .text-left { text-align: left; }
+                .text-success { color: green; }
+                .text-danger { color: red; }
+            </style>
+        </head>
+        <body>
+            <h3>Profit Report</h3>
+            ${printSection}
+        </body>
+        </html>
+    `;
+
+        window.print(); // print dialog open
+        document.body.innerHTML = originalContent; // restore page
+        location.reload(); // optional, restore JS events & styles
+    }
+</script>
+@endpush

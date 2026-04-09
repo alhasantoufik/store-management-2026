@@ -230,119 +230,6 @@ class StockController extends Controller
     }
 
 
-    // Show all stock-out transactions
-    public function allstockOutIndex(Request $request)
-    {
-        $query = StockTransaction::where('type', StockTransaction::TYPE_OUT)
-            ->select(
-                'voucher_no',
-                DB::raw('SUM(quantity) as total_quantity'),
-                DB::raw('SUM(total_price) as total_price'),
-                'in_date'
-            )
-            ->groupBy('voucher_no', 'in_date')
-            ->orderBy('in_date', 'desc');
-
-        // Voucher search
-        if ($request->filled('voucher_no')) {
-            $query->where('voucher_no', 'like', '%' . $request->voucher_no . '%');
-        }
-
-        // Date range filter
-        if ($request->filled('start_date') && $request->filled('end_date')) {
-            $query->whereBetween('in_date', [$request->start_date, $request->end_date]);
-        }
-
-        $stockOuts = $query->get();
-
-        return view('backend.admin.stock.stockout.index', compact('stockOuts'));
-    }
-
-    // Edit stock-out transaction
-    public function editStockOut($voucher_no)
-    {
-        // Fetch all stock-outs under this voucher
-        $stocks = StockTransaction::with('product')
-            ->where('type', StockTransaction::TYPE_OUT)
-            ->where('voucher_no', $voucher_no)
-            ->get();
-
-        if ($stocks->isEmpty()) {
-            abort(404, 'Voucher not found');
-        }
-
-        return view('backend.admin.stock.stockout.edit', compact('stocks', 'voucher_no'));
-    }
-
-    // Update stock-out transaction
-    public function updateStockOut(Request $request, $voucher_no)
-    {
-        $request->validate([
-            'stocks.*.id' => 'required|exists:stock_transactions,id',
-            'stocks.*.quantity' => 'required|integer|min:1',
-            'stocks.*.price' => 'required|numeric|min:0',
-            'stocks.*.note' => 'nullable|string',
-        ]);
-
-        DB::transaction(function () use ($request) {
-            foreach ($request->stocks as $stockData) {
-                $stock = StockTransaction::lockForUpdate()->findOrFail($stockData['id']);
-                if ($stock->type !== StockTransaction::TYPE_OUT) {
-                    abort(403, 'Invalid stock type');
-                }
-
-                $product = Product::lockForUpdate()->findOrFail($stock->product_id);
-
-                // Calculate new stock
-                $newStock = $product->total_stock + $stock->quantity - $stockData['quantity'];
-                if ($newStock < 0) {
-                    throw new \Exception("Not enough stock for product {$product->name}");
-                }
-
-                // Update product stock
-                $product->update(['total_stock' => $newStock]);
-
-                // Update stock transaction
-                $stock->update([
-                    'quantity' => $stockData['quantity'],
-                    'total_price' => $stockData['quantity'] * $stockData['price'],
-                    'current_stock' => $newStock,
-                    'note' => $stockData['note'],
-                ]);
-            }
-        });
-
-        return redirect()->route('stock.out.index')->with('success', 'Voucher updated successfully');
-    }
-
-    // Delete stock-out transaction
-    public function deleteStockOut($voucher_no)
-    {
-        DB::transaction(function () use ($voucher_no) {
-            // Get all stock out records for this voucher
-            $stocks = StockTransaction::lockForUpdate()
-                ->where('voucher_no', $voucher_no)
-                ->where('type', StockTransaction::TYPE_OUT)
-                ->get();
-
-            if ($stocks->isEmpty()) {
-                abort(404, 'Voucher not found');
-            }
-
-            foreach ($stocks as $stock) {
-                // Revert product stock
-                $product = Product::lockForUpdate()->findOrFail($stock->product_id);
-                $product->update(['total_stock' => $product->total_stock + $stock->quantity]);
-
-                // Delete the stock transaction
-                $stock->delete();
-            }
-        });
-
-        return response()->json(['status' => 'success']);
-    }
-
-
     public function stockReturnIndex()
     {
         $products = Product::all();
@@ -387,8 +274,8 @@ class StockController extends Controller
                 $newStock = $prevStock + $qty;
 
                 // Unit price stays positive, but total_price should be negative
-                $unitPrice = (float) ($item['price'] ?? $product->product_price ?? 0);
-                $totalPrice = -1 * $unitPrice * $qty; // negative
+                $unitPrice = (float) ($item['price'] ?? $product->sale_price ?? 0);
+                $totalPrice = -1 * $unitPrice * $qty; // ❌ negative
 
                 StockTransaction::create([
                     'voucher_no'     => $voucherNo,
@@ -414,8 +301,6 @@ class StockController extends Controller
             return back()->with('error', 'Something went wrong! ' . $e->getMessage());
         }
     }
-
-
     public function stockReport(Request $request)
     {
         $products = Product::all(); // filter dropdown
@@ -452,6 +337,98 @@ class StockController extends Controller
         return view('backend.admin.stock.report', compact('transactions', 'products'));
     }
 
+    public function edit($id)
+    {
+        $transaction = StockTransaction::with('product')->findOrFail($id);
+        $products = Product::all();
+
+        return view('backend.admin.stock.edit', compact('transaction', 'products'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity'   => 'required|integer|min:1',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $transaction = StockTransaction::findOrFail($id);
+            $product = Product::lockForUpdate()->findOrFail($transaction->product_id);
+
+            // 🔥 Step 1: rollback old stock
+            if ($transaction->type == 'in') {
+                $product->total_stock -= $transaction->quantity;
+            } elseif ($transaction->type == 'out') {
+                $product->total_stock += $transaction->quantity;
+            } elseif ($transaction->type == 'return') {
+                $product->total_stock -= $transaction->quantity;
+            }
+
+            // 🔥 Step 2: apply new stock
+            $newQty = $request->quantity;
+
+            if ($transaction->type == 'in') {
+                $product->total_stock += $newQty;
+            } elseif ($transaction->type == 'out') {
+                if ($newQty > $product->total_stock) {
+                    throw new \Exception("Stock not enough!");
+                }
+                $product->total_stock -= $newQty;
+            } elseif ($transaction->type == 'return') {
+                $product->total_stock += $newQty;
+            }
+
+            // update transaction
+            $transaction->update([
+                'product_id' => $request->product_id,
+                'quantity' => $newQty,
+                'current_stock' => $product->total_stock,
+            ]);
+
+            $product->save();
+
+            DB::commit();
+
+            return redirect()->route('stock.report')->with('success', 'Updated Successfully');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function delete($id)
+    {
+        DB::beginTransaction();
+
+        try {
+            $transaction = StockTransaction::findOrFail($id);
+            $product = Product::lockForUpdate()->findOrFail($transaction->product_id);
+
+            // 🔥 rollback stock
+            if ($transaction->type == 'in') {
+                $product->total_stock -= $transaction->quantity;
+            } elseif ($transaction->type == 'out') {
+                $product->total_stock += $transaction->quantity;
+            } elseif ($transaction->type == 'return') {
+                $product->total_stock -= $transaction->quantity;
+            }
+
+            $product->save();
+            $transaction->delete();
+
+            DB::commit();
+
+            return response()->json(['status' => 'success']);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['status' => 'error']);
+        }
+    }
+
+
 
     public function allindex(Request $request)
     {
@@ -476,131 +453,5 @@ class StockController extends Controller
         $brands = \App\Models\Brand::all();
 
         return view('backend.admin.stock.allstockindex', compact('products', 'categories', 'brands'));
-    }
-
-
-    // Show all stock-in transactions
-    public function stockInIndex()
-    {
-        // Group by voucher_no and calculate totals
-        $stockIns = StockTransaction::where('type', StockTransaction::TYPE_IN)
-            ->select(
-                'voucher_no',
-                DB::raw('SUM(quantity) as total_quantity'),
-                DB::raw('SUM(total_price) as total_price'),
-                'in_date'
-            )
-            ->groupBy('voucher_no', 'in_date')
-            ->orderBy('in_date', 'desc')
-            ->get();
-
-        return view('backend.admin.stock.stockin.stock_in', compact('stockIns'));
-    }
-
-    public function stockInSearch(Request $request)
-    {
-        $query = StockTransaction::where('type', StockTransaction::TYPE_IN);
-
-        // Search by voucher number
-        if ($request->filled('voucher_no')) {
-            $query->where('voucher_no', 'like', '%' . $request->voucher_no . '%');
-        }
-
-        // Filter by date range
-        if ($request->filled('from_date') && $request->filled('to_date')) {
-            $query->whereBetween('in_date', [
-                $request->from_date,
-                $request->to_date
-            ]);
-        }
-
-        $stockIns = $query->select(
-            'voucher_no',
-            DB::raw('SUM(quantity) as total_quantity'),
-            DB::raw('SUM(total_price) as total_price'),
-            'in_date'
-        )
-            ->groupBy('voucher_no', 'in_date')
-            ->orderBy('in_date', 'desc')
-            ->get();
-
-        // Return only the table rows HTML
-        return view('backend.admin.stock.stockin.partials.stock_in_rows', compact('stockIns'))->render();
-    }
-
-    // Edit stock-in transaction
-    public function editStockIn($voucherNo)
-    {
-        $stocks = StockTransaction::with('product')
-            ->where('type', StockTransaction::TYPE_IN)
-            ->where('voucher_no', $voucherNo)
-            ->get();
-
-        if ($stocks->isEmpty()) {
-            abort(404, 'Voucher not found');
-        }
-
-        return view('backend.admin.stock.stockin.edit_stock_in', compact('stocks', 'voucherNo'));
-    }
-
-    // Update stock-in transaction
-    public function updateStockIn(Request $request, $voucherNo)
-    {
-        $request->validate([
-            'quantity.*' => 'required|integer|min:1',
-            'price.*' => 'required|numeric|min:0',
-            'note.*' => 'nullable|string',
-        ]);
-
-        DB::transaction(function () use ($request, $voucherNo) {
-            $stocks = StockTransaction::lockForUpdate()
-                ->where('type', StockTransaction::TYPE_IN)
-                ->where('voucher_no', $voucherNo)
-                ->get();
-
-            foreach ($stocks as $stock) {
-                $product = Product::lockForUpdate()->findOrFail($stock->product_id);
-
-                $newStock = $product->total_stock - $stock->quantity + $request->quantity[$stock->id];
-
-                $product->update(['total_stock' => $newStock]);
-
-                $stock->update([
-                    'quantity' => $request->quantity[$stock->id],
-                    'total_price' => $request->quantity[$stock->id] * $request->price[$stock->id],
-                    'current_stock' => $newStock,
-                    'note' => $request->note[$stock->id] ?? $stock->note,
-                ]);
-            }
-        });
-
-        return redirect()->route('stock.in.index')->with('success', 'Stock updated successfully');
-    }
-
-    // Delete stock-in transaction
-    public function deleteStockIn($voucherNo)
-    {
-        DB::transaction(function () use ($voucherNo) {
-            $stocks = StockTransaction::lockForUpdate()
-                ->where('type', StockTransaction::TYPE_IN)
-                ->where('voucher_no', $voucherNo)
-                ->get();
-
-            if ($stocks->isEmpty()) {
-                abort(404, 'Voucher not found');
-            }
-
-            foreach ($stocks as $stock) {
-                $product = Product::lockForUpdate()->findOrFail($stock->product_id);
-
-                // Adjust total_stock
-                $newStock = $product->total_stock - $stock->quantity;
-                $product->update(['total_stock' => $newStock]);
-
-                $stock->delete();
-            }
-        });
-
-        return response()->json(['status' => 'success']);
     }
 }

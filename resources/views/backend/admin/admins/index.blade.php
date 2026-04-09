@@ -1,5 +1,5 @@
 @extends('backend.app')
-@section('title', 'সকল অ্যাডমিন')
+@section('title', 'All Admins')
 
 @section('page-content')
 <div class="toolbar" id="kt_toolbar">

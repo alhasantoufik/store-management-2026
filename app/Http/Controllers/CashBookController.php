@@ -6,16 +6,19 @@ use App\Models\Product;
 use App\Models\StockTransaction;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Models\Cost;
 
 class CashBookController extends Controller
 {
+
+
     public function index(Request $request)
     {
         $products = Product::all();
 
         $query = StockTransaction::with('product')->orderBy('in_date', 'desc');
 
-        // 🔹 Default: show today if no filter is set
+        // Default: show today if no filter
         if (!$request->filled('days') && !$request->filled('start_date') && !$request->filled('end_date')) {
             $query->whereDate('in_date', Carbon::today());
         }
@@ -41,23 +44,41 @@ class CashBookController extends Controller
 
         $transactions = $query->get();
 
-        // Separate by type
-        $stockIn    = $transactions->where('type', StockTransaction::TYPE_IN);
-        $stockOut   = $transactions->where('type', StockTransaction::TYPE_OUT);
-        $returns    = $transactions->where('type', StockTransaction::TYPE_RETURN);
+        $stockIn  = $transactions->where('type', StockTransaction::TYPE_IN);
+        $stockOut = $transactions->where('type', StockTransaction::TYPE_OUT);
+        $returns  = $transactions->where('type', StockTransaction::TYPE_RETURN);
 
-        // Totals
-        $totalCost   = $stockIn->sum('total_price');
-        $totalIncome = $stockOut->sum('total_price') + $returns->sum('total_price');
-        $profit      = $totalIncome - $totalCost;
+        $totalCostIn   = $stockIn->sum('total_price');
+        $totalIncome   = $stockOut->sum('total_price') + $returns->sum('total_price');
+
+        // Fetch costs in the same filter
+        $costQuery = Cost::query()->orderBy('date', 'desc');
+
+        if ($request->filled('days')) {
+            $costQuery->whereDate('date', '>=', $startDate);
+        }
+        if ($request->filled('start_date')) {
+            $costQuery->whereDate('date', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $costQuery->whereDate('date', '<=', $request->end_date);
+        }
+
+        $costs = $costQuery->get();
+        $totalOtherCost = $costs->sum('amount');
+
+        // Final profit calculation including costs
+        $profit = $totalIncome - ($totalCostIn + $totalOtherCost);
 
         return view('backend.admin.cashbook.index', compact(
             'products',
             'stockIn',
             'stockOut',
             'returns',
-            'totalCost',
+            'costs',
+            'totalCostIn',
             'totalIncome',
+            'totalOtherCost',
             'profit'
         ));
     }

@@ -1,5 +1,5 @@
 @extends('backend.app')
-@section('title', 'Stock Management')
+@section('title', 'All Stock Management')
 @section('page-content')
 <style>
     /* Select2 এর উচ্চতা বুটস্ট্র্যাপের ইনপুটের সমান করার জন্য */

@@ -1,62 +1,63 @@
 @extends('backend.app')
+@section('title', 'Brand')
 @section('page-content')
 
 <div class="container-fluid">
     <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <!-- Title Left -->
-        <h5 class="mb-0 fw-bold text-secondary">Brand Management</h5>
-        
-        <!-- Add Button Right (Optional, but usually better on the right) 
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <!-- Title Left -->
+            <h5 class="mb-0 fw-bold text-secondary">Brand Management</h5>
+
+            <!-- Add Button Right (Optional, but usually better on the right) 
              If you want it strictly on the left under the title, 
              we can adjust the layout. -->
-        <button class="btn btn-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#brandModal">
-            <i class="fas fa-plus-circle me-1"></i> Add Brand
-        </button>
-    </div>
-    
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-3" style="width: 80px;">#</th>
-                        <th>Name</th>
-                        <th>Image</th>
-                        <th class="text-end pe-3">Action</th>
-                    </tr>
-                </thead>
-                <tbody id="brandTable">
-                    @foreach($brands as $key => $brand)
-                    <tr>
-                        <td class="ps-3 fw-medium text-muted">{{ $key + 1 }}</td>
-                        <td class="fw-bold">{{ $brand->name }}</td>
-                        <td>
-                            @if($brand->image)
-                                <img src="{{ asset($brand->image) }}" 
-                                     class="rounded border" 
-                                     style="width: 45px; height: 45px; object-fit: cover;">
-                            @else
+            <button class="btn btn-primary btn-sm px-4" data-bs-toggle="modal" data-bs-target="#brandModal">
+                <i class="fas fa-plus-circle me-1"></i> Add Brand
+            </button>
+        </div>
+
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3" style="width: 80px;">#</th>
+                            <th>Name</th>
+                            <th>Image</th>
+                            <th class="text-end pe-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="brandTable">
+                        @foreach($brands as $key => $brand)
+                        <tr>
+                            <td class="ps-3 fw-medium text-muted">{{ $key + 1 }}</td>
+                            <td class="fw-bold">{{ $brand->name }}</td>
+                            <td>
+                                @if($brand->image)
+                                <img src="{{ asset($brand->image) }}"
+                                    class="rounded border"
+                                    style="width: 45px; height: 45px; object-fit: cover;">
+                                @else
                                 <span class="badge bg-light text-dark border">No Image</span>
-                            @endif
-                        </td>
-                        <td class="text-end pe-3">
-                            <div class="btn-group">
-                                <button class="btn btn-outline-warning btn-sm editBtn" data-id="{{ $brand->id }}">
-                                    Edit
-                                </button>
-                                <button class="btn btn-outline-danger btn-sm deleteBtn" data-id="{{ $brand->id }}">
-                                    Delete
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                                @endif
+                            </td>
+                            <td class="text-end pe-3">
+                                <div class="btn-group gap-2">
+                                    <button class="btn btn-warning btn-sm editBtn" data-id="{{ $brand->id }}">
+                                        Edit
+                                    </button>
+                                    <button class="btn btn-danger btn-sm deleteBtn" data-id="{{ $brand->id }}">
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
     <!-- Modal -->
     <div class="modal fade" id="brandModal">
         <div class="modal-dialog">
@@ -87,6 +88,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $(document).ready(function() {
 
@@ -162,26 +164,59 @@
         // =========================
         $(document).on('click', '.deleteBtn', function() {
 
-            if (confirm('Are you sure?')) {
+            let id = $(this).data('id');
+            let url = "{{ route('brands.delete', ':id') }}".replace(':id', id);
 
-                let id = $(this).data('id');
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This brand will be deleted!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
 
-                let url = "{{ route('brands.delete', ':id') }}".replace(':id', id);
+                if (result.isConfirmed) {
 
-                $.ajax({
-                    url: url,
-                    type: "DELETE",
-                    success: function() {
+                    $.ajax({
+                        url: url,
+                        type: "DELETE",
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function() {
 
-                        location.reload();
-                    },
-                    error: function(err) {
-                        console.log(err);
-                    }
-                });
-            }
+                            Swal.fire(
+                                'Deleted!',
+                                'Brand has been deleted.',
+                                'success'
+                            );
+
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1000);
+                        },
+                        error: function(err) {
+                            console.log(err);
+
+                            Swal.fire(
+                                'Error!',
+                                'Something went wrong!',
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
         });
 
+
+
+
+    });
+    $('#brand-' + id).fadeOut(500, function() {
+        $(this).remove();
     });
 </script>
 @endpush

@@ -1,5 +1,5 @@
 @extends('backend.app')
-@section('title', 'ড্যাশবোর্ড')
+@section('title', 'Dashboard')
 
 @section('page-content')
 
@@ -32,7 +32,7 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Total Users -->
-            <div class="col-md-3 mt-4">
+            <!-- <div class="col-md-3 mt-4">
                 <div class="card shadow-sm dashboard-card">
                     <div class="card-body d-flex justify-content-between">
                         <div>
@@ -44,14 +44,14 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> -->
 
             <div class="col-md-3 mt-4">
                 <div class="card shadow-sm dashboard-card">
                     <div class="card-body d-flex justify-content-between">
                         <div>
                             <h1 class="fw-bold">{{ $totalProducts }}</h1>
-                            <h5 class="text-muted">মোট পণ্য</h5>
+                            <h5 class="text-muted">Total Products</h5>
                         </div>
                         <div>
                             <i class="fas fa-box fa-3x text-info"></i>
@@ -67,7 +67,7 @@
                         <div class="card-body d-flex justify-content-between">
                             <div>
                                 <h1 class="fw-bold">{{ $today_stock_in }}</h1>
-                                <h5 class="text-muted">আজকের স্টক ইন</h5>
+                                <h5 class="text-muted">Today's Stock In</h5>
                             </div>
                             <div>
                                 <i class="fas fa-boxes fa-3x text-success"></i>
@@ -84,7 +84,7 @@
                         <div class="card-body d-flex justify-content-between">
                             <div>
                                 <h1 class="fw-bold">{{ $today_stock_out }}</h1>
-                                <h5 class="text-muted">আজকের স্টক আউট</h5>
+                                <h5 class="text-muted">Today's Stock Out</h5>
                             </div>
                             <div>
                                 <i class="fas fa-truck fa-3x text-danger"></i>
@@ -101,7 +101,7 @@
                         <div class="card-body d-flex justify-content-between">
                             <div>
                                 <h1 class="fw-bold">{{ $today_stock_return }}</h1>
-                                <h5 class="text-muted">আজকের স্টক রিটার্ন</h5>
+                                <h5 class="text-muted">Today's Stock Return</h5>
                             </div>
                             <div>
                                 <i class="fas fa-undo fa-3x text-warning"></i>
@@ -116,8 +116,8 @@
                 <div class="card shadow-sm dashboard-card">
                     <div class="card-body d-flex justify-content-between">
                         <div>
-                            <h1 class="fw-bold">{{ number_format($todayStockInCost, 2) }}৳</h1>
-                            <h5 class="text-muted">আজকের মোট খরচ</h5>
+                            <h1 class="fw-bold">{{ number_format($todayStockInCost, 2) }} Tk.</h1>
+                            <h5 class="text-muted">Today's Total Cost</h5>
                         </div>
                         <div>
                             <i class="fas fa-money-bill-wave fa-3x text-success"></i>
@@ -130,8 +130,8 @@
                 <div class="card shadow-sm dashboard-card">
                     <div class="card-body d-flex justify-content-between">
                         <div>
-                            <h1 class="fw-bold">{{ number_format($todayProfit, 2) }}৳</h1>
-                            <h5 class="text-muted">আজকের লাভ</h5>
+                            <h1 class="fw-bold">{{ number_format($todayProfit, 2) }} Tk.</h1>
+                            <h5 class="text-muted">Today's Balance</h5>
                         </div>
                         <div>
                             <i class="fas fa-chart-line fa-3x text-primary"></i>

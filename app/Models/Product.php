@@ -17,7 +17,9 @@ class Product extends Model
         'sale_price',
         'unit',
         'status',
-         'total_stock', // ✅ MUST
+         'total_stock',
+         'image',
+         'product_code', // ✅ add this
     ];
 
     public function category()

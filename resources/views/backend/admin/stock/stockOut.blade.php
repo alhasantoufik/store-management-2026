@@ -1,6 +1,5 @@
 @extends('backend.app')
-@section('title', 'Stock Management')
-
+@section('title', 'Stock Out Management')
 @section('page-content')
 
 <style>
@@ -221,6 +220,23 @@
                         </thead>
                         <tbody>
                         </tbody>
+                        <tfoot>
+                            <tr class="bg-light fw-bold">
+                                <td colspan="2" class="text-end">Total:</td>
+
+                                <td class="text-center">
+                                    <span id="totalQty">0</span>
+                                </td>
+
+                                <td></td>
+
+                                <td class="text-end">
+                                    <span id="totalPrice">0.00</span>
+                                </td>
+
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
 
@@ -298,7 +314,7 @@
                 method: "POST",
                 data: form.serialize(),
                 success: function(response) {
-                    if(response.status === 'success') {
+                    if (response.status === 'success') {
                         // ইনভয়েস পেজে নিয়ে যাওয়া (সেখান থেকে প্রিন্ট হয়ে অটো ব্যাক করবে)
                         window.location.href = response.redirect;
                     }
@@ -314,8 +330,7 @@
 
     // ৩. নতুন রো তৈরি করার ফাংশন
     function addNewRow(productId, productName) {
-        let row = `
-        <tr id="row_${rowCount}" class="align-middle">
+        let row = `<tr id="row_${rowCount}" class="align-middle">
             <td data-label="Product">
                 <input type="hidden" name="products[${rowCount}][product_id]" value="${productId}" class="row-product-id">
                 <span class="fw-bold text-dark">${productName}</span>
@@ -358,6 +373,7 @@
     // ৫. ক্যালকুলেশন এবং রো রিমুভ
     $(document).on('click', '.removeRow', function() {
         $(this).closest('tr').remove();
+         calculateSummary(); // ✅ added to recalculate totals after row removal
         if ($('#stockTable tbody tr').length === 0) $('#emptyMsg').show();
     });
 
@@ -380,6 +396,27 @@
 
         row.find('.newStockText').text(newStock);
         row.find('.totalPriceText').text(totalPrice.toFixed(2));
+        calculateSummary();
+    }
+
+    function calculateSummary() {
+        let totalQty = 0;
+        let totalPrice = 0;
+
+        $('#stockTable tbody tr').each(function() {
+            let qty = parseInt($(this).find('.qty').val()) || 0;
+            let price = parseFloat($(this).find('.unitPriceInput').val()) || 0;
+
+            totalQty += qty;
+            totalPrice += (qty * price);
+        });
+
+        $('#totalQty').text(totalQty);
+
+        $('#totalPrice').text(totalPrice.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }));
     }
 </script>
 @endpush

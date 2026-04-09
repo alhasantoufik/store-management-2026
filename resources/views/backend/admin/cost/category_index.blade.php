@@ -1,12 +1,12 @@
 @extends('backend.app')
-@section('title','Cost Category')
+@section('title','Expense Category')
 @section('page-content')
 
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h4 class="fw-bold text-dark m-0">Expense Categories</h4>
 
-        <button class="btn btn-success px-3 shadow-sm" onclick="addCategory()">
+        <button class="btn btn-info px-3 shadow-sm" onclick="addCategory()">
             <i class="fas fa-plus-circle me-1"></i> Add Category
         </button>
     </div>
@@ -62,6 +62,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     function addCategory() {
         $('#category_id').val('');
@@ -96,9 +97,22 @@
         });
     }
 
-    function deleteCategory(id) {
-        if (confirm('Are you sure?')) {
-            let url = "{{ route('cost.category.delete', ['id' => ':id']) }}".replace(':id', id);
+   function deleteCategory(id) {
+
+    let url = "{{ route('cost.category.delete', ['id' => ':id']) }}".replace(':id', id);
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "This category will be deleted!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+
+        if (result.isConfirmed) {
+
             $.ajax({
                 url: url,
                 type: 'DELETE',
@@ -106,10 +120,29 @@
                     _token: "{{ csrf_token() }}"
                 },
                 success: function(res) {
-                    $('#row-' + id).remove();
+
+                    // row remove with animation
+                    $('#row-' + id).fadeOut(400, function() {
+                        $(this).remove();
+                    });
+
+                    Swal.fire(
+                        'Deleted!',
+                        'Category has been deleted.',
+                        'success'
+                    );
+                },
+                error: function() {
+
+                    Swal.fire(
+                        'Error!',
+                        'Something went wrong!',
+                        'error'
+                    );
                 }
             });
         }
-    }
+    });
+}
 </script>
 @endpush

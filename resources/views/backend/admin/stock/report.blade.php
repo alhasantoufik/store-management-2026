@@ -73,7 +73,11 @@
                     <a href="{{ route('stock.report') }}" class="btn btn-secondary w-50">Reset</a>
                 </div>
             </form>
-
+            <div class="mb-3 text-end">
+                <button class="btn btn-primary" onclick="printStockReport()">
+                    <i class="fas fa-print me-1"></i> Print Report
+                </button>
+            </div>
             <div class="table-responsive">
                 <table class="table table-bordered table-hover">
                     <thead class="bg-light">
@@ -93,14 +97,22 @@
                     </thead>
                     <tbody>
                         @php
-                        $page = request()->get('page', 1); // current page number
-                        $perPage = $transactions->perPage(); // items per page (50)
-                        $sl = ($page - 1) * $perPage; // offset for serial number
+                        $page = request()->get('page', 1);
+                        $perPage = $transactions->perPage();
+                        $total = $transactions->total();
+                        $sl = $total - (($page - 1) * $perPage);
+
+                        $totalQuantity = 0;
+                        $totalAmount = 0;
                         @endphp
 
                         @forelse($transactions as $index => $t)
+                        @php
+                        $totalQuantity += $t->quantity;
+                        $totalAmount += $t->total_price;
+                        @endphp
                         <tr>
-                            <td>{{ ++$sl }}</td> <!-- Serial number with pagination offset -->
+                            <td>{{ $sl-- }}</td>
                             <td>{{ $t->product->name ?? '-' }}</td>
                             <td>{{ $t->voucher_no }}</td>
                             <td>{{ ucfirst($t->type) }}</td>
@@ -114,10 +126,22 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="10" class="text-center text-muted">No transactions found</td>
+                            <td colspan="11" class="text-center text-muted">No transactions found</td>
                         </tr>
                         @endforelse
                     </tbody>
+
+                    @if($transactions->count() > 0)
+                    <tfoot>
+                        <tr class="table-secondary fw-bold">
+                            <td colspan="4" class="text-end">Total:</td>
+                            <td>{{ $totalQuantity }}</td>
+                            <td></td>
+                            <td>{{ number_format($totalAmount, 2) }} Tk.</td>
+                            <td colspan="4"></td>
+                        </tr>
+                    </tfoot>
+                    @endif
                 </table>
 
                 {{ $transactions->links() }}
@@ -157,5 +181,39 @@
             $(this).closest('form').submit();
         }
     });
+</script>
+
+<script>
+    function printStockReport() {
+        // Print korar section select
+        let printSection = document.querySelector('.table-responsive').innerHTML;
+        let originalContent = document.body.innerHTML;
+
+        document.body.innerHTML = `
+        <html>
+        <head>
+            <title>Stock Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h3 { text-align: center; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+                th { background-color: #f0f0f0; }
+                tfoot td { font-weight: bold; }
+                .text-end { text-align: right; }
+                .text-left { text-align: left; }
+            </style>
+        </head>
+        <body>
+            <h3>Stock Report</h3>
+            ${printSection}
+        </body>
+        </html>
+    `;
+
+        window.print(); // browser print dialog open
+        document.body.innerHTML = originalContent; // restore original page
+        location.reload(); // restore JS & pagination
+    }
 </script>
 @endpush

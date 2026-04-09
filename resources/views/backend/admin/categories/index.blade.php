@@ -5,7 +5,7 @@
    <div class="card border-0 shadow-sm">
     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
         <h5 class="mb-0 fw-bold text-dark">Category List</h5>
-        <button class="btn btn-success btn-sm px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#addModal">
+        <button class="btn btn-info btn-sm px-4 shadow-sm" data-bs-toggle="modal" data-bs-target="#addModal">
             <i class="fas fa-plus-circle me-1"></i> Add Category
         </button>
     </div>
@@ -46,11 +46,11 @@
                             </span>
                         </td>
                         <td class="text-end pe-3">
-                            <div class="btn-group">
-                                <button class="btn btn-outline-warning btn-sm editBtn" data-id="{{ $cat->id }}" title="Edit">
+                            <div class="btn-group gap-2">
+                                <button class="btn btn-warning btn-sm editBtn" data-id="{{ $cat->id }}" title="Edit">
                                     <i class="fas fa-edit"></i> Edit
                                 </button>
-                                <button class="btn btn-outline-danger btn-sm deleteBtn" data-id="{{ $cat->id }}" title="Delete">
+                                <button class="btn btn-danger btn-sm deleteBtn" data-id="{{ $cat->id }}" title="Delete">
                                     <i class="fas fa-trash"></i> Delete
                                 </button>
                             </div>
@@ -128,6 +128,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $.ajaxSetup({
@@ -192,28 +193,56 @@
     });
     // ==================== DELETE CATEGORY ====================
     $(document).on('click', '.deleteBtn', function() {
-        if (!confirm('Are you sure you want to delete this category?')) return;
 
-        let id = $(this).data('id');
+    let id = $(this).data('id');
 
-        $.ajax({
-            url: "{{ route('categories.destroy', ':id') }}".replace(':id', id),
-            method: "POST",
-            data: {
-                _token: '{{ csrf_token() }}',
-                _method: 'DELETE'
-            },
-            success: function(response) {
-                if (response.success) {
-                    location.reload();
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You want to delete this category!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+
+        if (result.isConfirmed) {
+
+            $.ajax({
+                url: "{{ route('categories.destroy', ':id') }}".replace(':id', id),
+                method: "POST",
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    _method: 'DELETE'
+                },
+                success: function(response) {
+
+                    if (response.success) {
+
+                        Swal.fire(
+                            'Deleted!',
+                            'Category has been deleted.',
+                            'success'
+                        );
+
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1000);
+                    }
+                },
+                error: function(xhr) {
+                    console.error(xhr);
+
+                    Swal.fire(
+                        'Error!',
+                        'Failed to delete category!',
+                        'error'
+                    );
                 }
-            },
-            error: function(xhr) {
-                console.error(xhr);
-                alert('Failed to delete category!');
-            }
-        });
+            });
+        }
     });
+});
     // ==================== ADD CATEGORY ====================
     $('#addForm').on('submit', function(e) {
         e.preventDefault();

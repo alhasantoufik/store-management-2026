@@ -1,5 +1,5 @@
 @extends('backend.app')
-@section('title', 'Stock Management')
+@section('title', 'Stock In Management')
 
 @section('page-content')
 
@@ -221,6 +221,23 @@
                         </thead>
                         <tbody>
                         </tbody>
+                        <tfoot>
+                            <tr class="bg-light fw-bold">
+                                <td colspan="2" class="text-end">Total:</td>
+    
+                                <td class="text-center">
+                                    <span id="totalQty">0 Tk.</span>
+                                </td>
+    
+                                <td></td>
+    
+                                <td class="text-end">
+                                    <span id="totalPrice">0.00 Tk.</span>
+                                </td>
+    
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
 
@@ -230,7 +247,7 @@
 
                 <div class="text-end mt-4">
                     <hr>
-                    <button type="submit" class="btn btn-success btn-lg px-5 shadow-sm">
+                    <button type="submit" class="btn btn-info btn-lg px-5 shadow-sm">
                         <i class="fas fa-save me-1"></i> Stock In
                     </button>
                 </div>
@@ -338,6 +355,7 @@
     // 4. Remove Row
     $(document).on('click', '.removeRow', function() {
         $(this).closest('tr').remove();
+        calculateSummary(); // ✅ add this to update totals after row removal
         if ($('#stockTable tbody tr').length === 0) {
             $('#emptyMsg').show();
         }
@@ -361,6 +379,9 @@
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         }));
+
+        // ✅ ADD THIS
+        calculateSummary();
     }
     $(document).on('input', '.unitPriceInput', function() {
         calculateRow($(this).closest('tr'));
@@ -395,6 +416,26 @@
             }
         });
     });
+
+    function calculateSummary() {
+        let totalQty = 0;
+        let totalPrice = 0;
+
+        $('#stockTable tbody tr').each(function() {
+            let qty = parseInt($(this).find('.qty').val()) || 0;
+            let price = parseFloat($(this).find('.unitPriceInput').val()) || 0;
+
+            totalQty += qty;
+            totalPrice += (qty * price);
+        });
+
+        $('#totalQty').text(totalQty);
+
+        $('#totalPrice').text(totalPrice.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }));
+    }
 </script>
 
 <style>

@@ -1,6 +1,5 @@
 @extends('backend.app')
-@section('title', 'Stock Management')
-
+@section('title', 'Stock Return Management')
 @section('page-content')
 
 <style>
@@ -221,6 +220,23 @@
                         </thead>
                         <tbody>
                         </tbody>
+                        <tfoot>
+                            <tr class="bg-light fw-bold">
+                                <td colspan="2" class="text-end">Total:</td>
+    
+                                <td class="text-center">
+                                    <span id="totalQty">0 Tk.</span>
+                                </td>
+    
+                                <td></td>
+    
+                                <td class="text-end">
+                                    <span id="totalPrice">0.00 Tk.</span>
+                                </td>
+    
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
 
@@ -327,7 +343,7 @@
                 row.find('.currentStockText').text(data.stock || 0);
 
                 // ✅ default product_price
-                row.find('.unitPriceInput').val(data.price || 0);
+                row.find('.unitPriceInput').val(data.sale_price || 0);
 
                 row.data('stock', data.stock || 0);
 
@@ -339,6 +355,7 @@
     // 4. Remove Row
     $(document).on('click', '.removeRow', function() {
         $(this).closest('tr').remove();
+         calculateSummary(); // ✅ add this to update totals after row removal
         if ($('#stockTable tbody tr').length === 0) {
             $('#emptyMsg').show();
         }
@@ -362,10 +379,33 @@
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         }));
+         calculateSummary();
     }
     $(document).on('input', '.unitPriceInput', function() {
         calculateRow($(this).closest('tr'));
     });
+
+
+
+    function calculateSummary() {
+        let totalQty = 0;
+        let totalPrice = 0;
+
+        $('#stockTable tbody tr').each(function() {
+            let qty = parseInt($(this).find('.qty').val()) || 0;
+            let price = parseFloat($(this).find('.unitPriceInput').val()) || 0;
+
+            totalQty += qty;
+            totalPrice += (qty * price);
+        });
+
+        $('#totalQty').text(totalQty);
+
+        $('#totalPrice').text(totalPrice.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }));
+    }
     
 </script>
 

@@ -36,15 +36,26 @@ class ProductController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'product_code' => 'nullable|string|max:100', // ✅ add
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'required|exists:brands,id',
             'product_price' => 'required|numeric',
             'sale_price' => 'nullable|numeric',
             'unit' => 'nullable|string|max:50',
             'status' => 'required|in:active,inactive',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048', // max 2MB
         ]);
 
-        Product::create($request->all());
+        $data = $request->all();
+
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/products'), $filename);
+            $data['image'] = 'uploads/products/' . $filename;
+        }
+
+        Product::create($data);
 
         return response()->json(['success' => 'Product added successfully.']);
     }
@@ -61,16 +72,32 @@ class ProductController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'product_code' => 'nullable|string|max:100',
             'category_id' => 'required|exists:categories,id',
             'brand_id' => 'required|exists:brands,id',
             'product_price' => 'required|numeric',
             'sale_price' => 'nullable|numeric',
             'unit' => 'nullable|string|max:50',
             'status' => 'required|in:active,inactive',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif,webp|max:2048',
         ]);
 
         $product = Product::findOrFail($id);
-        $product->update($request->all());
+        $data = $request->all();
+
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($product->image && file_exists(public_path($product->image))) {
+                unlink(public_path($product->image));
+            }
+
+            $file = $request->file('image');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/products'), $filename);
+            $data['image'] = 'uploads/products/' . $filename;
+        }
+
+        $product->update($data);
 
         return response()->json(['success' => 'Product updated successfully.']);
     }

@@ -38,7 +38,7 @@
 <div class="card border-0 shadow-sm mt-3">
     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
         <h5 class="mb-0 fw-bold text-dark">Product List</h5>
-        <button class="btn btn-info px-4 shadow-sm" id="addProductBtn" data-bs-toggle="modal" data-bs-target="#productModal">
+        <button class="btn btn-success px-4 shadow-sm" id="addProductBtn" data-bs-toggle="modal" data-bs-target="#productModal">
             <i class="fas fa-plus-circle me-1"></i> Add Product
         </button>
     </div>
@@ -52,7 +52,6 @@
                 <thead class="table-light">
                     <tr>
                         <th class="text-center">Sl.</th>
-                        <th>P. Code</th>
                         <th>Image</th>
                         <th>Name</th>
                         <th>Category</th>
@@ -68,7 +67,6 @@
                     @foreach($products as $product)
                     <tr id="product-{{ $product->id }}">
                         <td class="text-center text-muted">{{ $loop->iteration }}</td>
-                         <td>{{ $product->product_code }}</td>
                         <td class="text-center">
                             @if($product->image)
                             <img src="{{ asset($product->image) }}" alt="Product Image" width="50" height="50">
@@ -77,7 +75,6 @@
                             @endif
                         </td>
                         <td class="fw-bold">{{ $product->name }}</td>
-                       
                         <td>{{ $product->category->title }}</td>
                         <td>{{ $product->brand->name }}</td>
                         <td class="text-secondary">{{ number_format($product->product_price, 2) }} Tk.</td>
@@ -122,10 +119,6 @@
                     <div class="mb-3">
                         <label>Name</label>
                         <input type="text" name="name" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label>Product Code</label>
-                        <input type="text" name="product_code" class="form-control" placeholder="Enter product code">
                     </div>
 
                     <div class="mb-3">
@@ -194,7 +187,6 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
@@ -260,7 +252,6 @@
                 $('#modalTitle').text('Edit Product');
                 $('#product_id').val(res.product.id);
                 $('#productForm [name=name]').val(res.product.name);
-                $('#productForm [name=product_code]').val(res.product.product_code);
                 $('#productForm [name=category_id]').val(res.product.category_id);
                 $('#productForm [name=brand_id]').val(res.product.brand_id);
                 $('#productForm [name=product_price]').val(res.product.product_price);
@@ -302,50 +293,22 @@
         // ===============================
         // Delete Product
         // ===============================
-        // Delete button with event delegation
-        $('#product-table').on('click', '.delete-btn', function() {
-
+        $('.delete-btn').click(function() {
+            if (!confirm('Are you sure?')) return;
             let id = $(this).data('id');
+            let url = "{{ route('products.destroy', ':id') }}".replace(':id', id);
+            $.ajax({
+                url: url,
+                type: 'DELETE',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(res) {
 
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "This product will be deleted permanently!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-
-                if (result.isConfirmed) {
-
-                    let url = "{{ route('products.destroy', ':id') }}".replace(':id', id);
-
-                    $.ajax({
-                        url: url,
-                        type: 'DELETE',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(res) {
-                            $('#product-' + id).remove();
-
-                            Swal.fire(
-                                'Deleted!',
-                                'Product has been deleted.',
-                                'success'
-                            );
-                        },
-                        error: function(xhr) {
-                            console.log(xhr);
-
-                            Swal.fire(
-                                'Error!',
-                                'Something went wrong!',
-                                'error'
-                            );
-                        }
-                    });
+                    $('#product-' + id).remove();
+                },
+                error: function(xhr) {
+                    console.log(xhr);
                 }
             });
         });

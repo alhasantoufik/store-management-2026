@@ -26,26 +26,29 @@
                     </a>
                     <ul class="sub-menu">
                         <li class="{{ request()->routeIs('stock.index') ? 'mm-active' : '' }}">
-                            <a href="{{ route('stock.index') }}">Stock In</a>
+                            <a href="{{ route('stock.index') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>Stock In</a>
+                            <a href="{{ route('stock.in.index') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>All Stock In</a>
                         </li>
                         <li class="{{ request()->routeIs('stockOut.index') ? 'mm-active' : '' }}">
-                            <a href="{{ route('stockOut.index') }}">Stock Out</a>
+                            <a href="{{ route('stockOut.index') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>Stock Out</a>
+                            <a href="{{ route('stock.out.index') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>All Stock Out</a>
                         </li>
                         <li class="{{ request()->routeIs('stockReturn.index') ? 'mm-active' : '' }}">
-                            <a href="{{ route('stockReturn.index') }}">Stock Return</a>
+                            <a href="{{ route('stockReturn.index') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>Stock Return</a>
+                            <a href="#"><i class='fas fa-greater-than' style='font-size:11px'></i>All Stock Return</a>
                         </li>
-                          <li class="{{ request()->routeIs('admin.stocks.index') ? 'mm-active' : '' }}">
-                            <a href="{{ route('admin.stocks.index') }}">All Stock</a>
+                        <li class="{{ request()->routeIs('admin.stocks.index') ? 'mm-active' : '' }}">
+                            <a href="{{ route('admin.stocks.index') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>All Stock</a>
                         </li>
                         <li class="{{ request()->routeIs('stock.report') ? 'mm-active' : '' }}">
-                            <a href="{{ route('stock.report') }}">Stock Report</a>
+                            <a href="{{ route('stock.report') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>Stock Report</a>
                         </li>
                     </ul>
                 </li>
 
                 <li class="{{ request()->routeIs(['products.index']) ? 'mm-active' : '' }}">
                     <a href="{{ route('products.index') }}" class="waves-effect">
-                        <i class="fas fa-list-ul"></i>
+                        <i class="fab fa-product-hunt"></i>
                         <span>Products</span>
                     </a>
                 </li>
@@ -60,7 +63,7 @@
 
                 <li class="{{ request()->routeIs(['brands.index']) ? 'mm-active' : '' }}">
                     <a href="{{ route('brands.index') }}" class="waves-effect">
-                        <i class="fas fa-list-ul"></i>
+                        <i class="fas fa-globe"></i>
                         <span>Brands</span>
                     </a>
                 </li>
@@ -73,21 +76,29 @@
                         <span>Expense</span>
                     </a>
                     <ul class="sub-menu">
-                        <li><a href="{{ route('cost.category.index') }}">Categories</a></li>
-                        <li><a href="{{ route('cost.index') }}">Add Expense</a></li>
-                        <li><a href="{{ route('cost.all') }}">All Expenses / Report</a></li>
+                        <li><a href="{{ route('cost.category.index') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>Categories</a></li>
+                        <li><a href="{{ route('cost.field.index') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>Fields</a></li>
+                        <li><a href="{{ route('cost.create') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>Add Expense</a></li>
+                        <li><a href="{{ route('cost.index') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>All Expense</a></li>
+                        <!-- <li><a href="{{ route('cost.all') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>All Expenses</a></li> -->
                     </ul>
                 </li>
 
                 <li class="{{ request()->routeIs(['profit.report']) ? 'mm-active' : '' }}">
                     <a href="{{ route('profit.report') }}" class="waves-effect">
-                        <i class="fas fa-list-ul"></i>
+                        <i class="fas fa-business-time"></i>
                         <span>Profit Report</span>
+                    </a>
+                </li>
+                <li class="{{ request()->routeIs(['expense.report']) ? 'mm-active' : '' }}">
+                    <a href="{{ route('expense.report') }}" class="waves-effect">
+                        <i class="fas fa-money-bill"></i>
+                        <span>Expense Report</span>
                     </a>
                 </li>
                 <li class="{{ request()->routeIs(['cashbook.index']) ? 'mm-active' : '' }}">
                     <a href="{{ route('cashbook.index') }}" class="waves-effect">
-                        <i class="fas fa-list-ul"></i>
+                        <i class="fas fa-calculator"></i>
                         <span>CashBook</span>
                     </a>
                 </li>
@@ -100,11 +111,11 @@
                     <ul class="sub-menu">
 
 
-                        <li><a href="{{ route('admin.admins.create') }}">New Admin</a></li>
+                        <li><a href="{{ route('admin.admins.create') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>New Admin</a></li>
 
 
 
-                        <li><a href="{{ route('admin.admins.index') }}">All Admins</a></li>
+                        <li><a href="{{ route('admin.admins.index') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>All Admins</a></li>
 
 
                     </ul>
@@ -122,20 +133,20 @@
 
                         <li class="{{ request()->routeIs('admin.sms.summary') ? 'mm-active' : '' }}">
                             <a href="{{ route('admin.sms.summary') }}">
-                                Sent SMS
+                                <i class='fas fa-greater-than' style='font-size:11px'></i>Sent SMS
                             </a>
                         </li>
 
                         <li class="{{ request()->routeIs('admin.sms.send') ? 'mm-active' : '' }}">
                             <a href="{{ route('admin.sms.send') }}">
-                                SMS Summary
+                                <i class='fas fa-greater-than' style='font-size:11px'></i>SMS Summary
                             </a>
                         </li>
 
                         @if(auth()->check() && auth()->user()->name === 'Developer' && auth()->user()->role === 'admin')
                         <li class="{{ request()->routeIs('admin.sms.module') ? 'mm-active' : '' }}">
                             <a href="{{ route('admin.sms.module') }}">
-                                SMS Limit
+                                <i class='fas fa-greater-than' style='font-size:11px'></i>SMS Limit
                             </a>
                         </li>
                         @endif
@@ -154,8 +165,8 @@
                     <ul class="sub-menu">
 
 
-                        <li><a href="{{ route('profile.setting') }}">Profile Settings</a></li>
-                        <li><a href="{{ route('system.index') }}">System Settings</a></li>
+                        <li><a href="{{ route('profile.setting') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>Profile Settings</a></li>
+                        <li><a href="{{ route('system.index') }}"><i class='fas fa-greater-than' style='font-size:11px'></i>System Settings</a></li>
 
 
                     </ul>

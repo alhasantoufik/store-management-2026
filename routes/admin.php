@@ -103,6 +103,14 @@ Route::prefix('admin')->group(function () {
     Route::post('/stock/out', [StockController::class, 'stockOut'])->name('stock.out');
     Route::get('/stock/return', [StockController::class, 'stockReturnIndex'])->name('stockReturn.index');
 
+
+
+    Route::get('/stock/edit/{id}', [StockController::class, 'edit'])->name('stock.edit');
+    Route::post('/stock/update/{id}', [StockController::class, 'update'])->name('stock.update');
+    Route::delete('/stock/delete/{id}', [StockController::class, 'delete'])->name('stock.delete');
+
+
+
     Route::get('/stock-invoice/{voucher}', [StockController::class, 'invoice'])->name('stock.invoice');
     Route::get('/stockOut-invoice/{voucher}', [StockController::class, 'stockOutinvoice'])->name('stockOut.invoice');
 
@@ -127,8 +135,11 @@ Route::prefix('cost')->group(function () {
     Route::delete('/delete/{id}', [CostController::class, 'destroy'])->name('cost.delete');
     // All Costs / Reports
     Route::get('cost/all', [CostController::class, 'allCost'])->name('cost.all');
+
+    Route::get('/create', [CostController::class, 'create'])->name('cost.create');
 });
 
+Route::get('/expense/allreport', [CostController::class, 'allReport'])->name('expense.report');
 
 // Cost Category Routes
 Route::prefix('cost-category')->group(function () {
@@ -159,4 +170,26 @@ Route::get('cashbook', [CashBookController::class, 'index'])->name('cashbook.ind
 
 Route::prefix('admin')->group(function () {
     Route::get('/all/stocks/index', [StockController::class, 'allindex'])->name('admin.stocks.index');
+});
+
+
+
+// Stock In Management
+Route::prefix('admin')->group(function () {
+    Route::get('/stock-in', [StockController::class, 'stockInIndex'])->name('stock.in.index');
+    Route::get('/stock-in/edit/{id}', [StockController::class, 'editStockIn'])->name('stock.in.edit');
+    Route::post('/stock-in/update/{id}', [StockController::class, 'updateStockIn'])->name('stock.in.update');
+    Route::delete('/stock-in/delete/{id}', [StockController::class, 'deleteStockIn'])->name('stock.in.delete');
+});
+
+Route::get('/admin/stock-in/search', [StockController::class, 'stockInSearch'])->name('stock.in.search');
+
+
+
+// Stock Out Management
+Route::prefix('admin')->group(function () {
+    Route::get('/stock-out', [StockController::class, 'allstockOutIndex'])->name('stock.out.index');
+    Route::get('/stock-out/edit/{id}', [StockController::class, 'editStockOut'])->name('stock.out.edit');
+    Route::post('/stock-out/update/{id}', [StockController::class, 'updateStockOut'])->name('stock.out.update');
+    Route::delete('/stock-out/delete/{id}', [StockController::class, 'deleteStockOut'])->name('stock.out.delete');
 });

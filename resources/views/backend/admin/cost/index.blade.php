@@ -1,37 +1,99 @@
 @extends('backend.app')
-@section('title','All Costs')
+@section('title','All Expenses')
 @section('page-content')
+<style>
+    /* Select2 এর উচ্চতা বুটস্ট্র্যাপের ইনপুটের সমান করার জন্য */
+    .select2-container .select2-selection--single {
+        height: 38px !important;
+        /* বুটস্ট্র্যাপ ৪/৫ এর স্ট্যান্ডার্ড হাইট */
+        display: flex;
+        align-items: center;
+        border: 1px solid #dee2e6;
+        /* বর্ডারের রঙ ইনপুটের মতো রাখা */
+    }
 
+    /* টেক্সটকে সেন্টারে রাখার জন্য */
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 38px !important;
+        padding-left: 12px;
+    }
+
+    /* ড্রপডাউন অ্যারো (Arrow) এর পজিশন ঠিক করার জন্য */
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+    }
+</style>
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="fw-bold text-dark m-0">Costs</h4>
 
-        <button class="btn btn-success px-4 shadow-sm" onclick="addCost()">
+        <button class="btn btn-info px-4 shadow-sm" onclick="addCost()">
             <i class="fas fa-plus-circle me-1"></i> Add Expense
         </button>
     </div>
 
-    <div class="mb-2">
-        <select id="filter_category" class="form-control select2 d-inline-block w-auto">
-            <option value="">Select Category</option>
-            @foreach($categories as $cat)
-            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-            @endforeach
-        </select>
-        <input type="date" id="from" class="form-control d-inline-block w-auto">
-        <input type="date" id="to" class="form-control d-inline-block w-auto">
-        <button class="btn btn-success" onclick="filterCost()">Filter</button>
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-6 col-sm-6 col-md-2">
+                    <label class="form-label small fw-bold text-muted">From Date</label>
+                    <input type="date" id="from" class="form-control form-control-sm" placeholder="From Date">
+                </div>
+
+                <div class="col-6 col-sm-6 col-md-2">
+                    <label class="form-label small fw-bold text-muted">To Date</label>
+                    <input type="date" id="to" class="form-control form-control-sm" placeholder="To Date">
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-3">
+                    <label class="form-label small fw-bold text-muted">Category</label>
+                    <select id="filter_category" class="form-select form-select-sm select2">
+                        <option value="">Select Category</option>
+                        @foreach($categories as $cat)
+                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-12 col-sm-6 col-md-3">
+                    <label class="form-label small fw-bold text-muted">Field</label>
+                    <select id="filter_field" class="form-select form-select-sm select2">
+                        <option value="">Select Field</option>
+                        @foreach($fields as $field)
+                        <option value="{{ $field->id }}">{{ $field->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-2">
+                    <div class="row g-2">
+                        <div class="col-6 col-md-6">
+                            <button class="btn btn-info btn-sm w-100 text-white" onclick="filterCost()">
+                                <i class="fas fa-filter me-1"></i> Filter
+                            </button>
+                        </div>
+                        <div class="col-6 col-md-6">
+                            <a class="btn btn-secondary btn-sm w-100" href="{{ route('cost.index') }}">
+                                <i class="fas fa-undo me-1"></i> Reset
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    
     <div class="table-responsive">
         <table class="table table-bordered mt-2">
             <thead class="table-light">
                 <tr>
                     <th>ID</th>
+                    <th>Date</th>
                     <th>Category</th>
                     <th>Field</th> <!-- NEW -->
                     <th>Amount</th>
                     <th>Expense By</th>
-                    <th>Date</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -39,11 +101,11 @@
                 @foreach($costs as $cost)
                 <tr id="row-{{ $cost->id }}">
                     <td>{{ $loop->iteration }}</td>
+                    <td>{{ $cost->date }}</td>
                     <td>{{ $cost->category->name ?? ''}}</td>
                     <td>{{ $cost->field->name ?? '' }}</td>
                     <td>{{ $cost->amount }} Tk.</td>
                     <td>{{ $cost->cost_by }}</td>
-                    <td>{{ $cost->date }}</td>
                     <td>
                         <button class="btn btn-sm btn-warning" onclick="editCost({{ $cost->id }})">Edit</button>
                         <button class="btn btn-sm btn-danger" onclick="deleteCost({{ $cost->id }})">Delete</button>
@@ -51,6 +113,15 @@
                 </tr>
                 @endforeach
             </tbody>
+            <tfoot class="table-light">
+                <tr>
+                    <th colspan="4" class="text-end">Total:</th>
+                    <th>
+                        {{ $costs->sum('amount') }} Tk.
+                    </th>
+                    <th colspan="2"></th>
+                </tr>
+            </tfoot>
         </table>
     </div>
 </div>
@@ -105,6 +176,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script>
@@ -112,6 +184,14 @@
 
         $('.select2').select2({
             placeholder: "Select Category",
+            allowClear: true
+        });
+
+    })
+    $(document).ready(function() {
+
+        $('#filter_field').select2({
+            placeholder: "Select Field",
             allowClear: true
         });
 
@@ -166,28 +246,60 @@
     }
 
     function deleteCost(id) {
-        if (confirm('Are you sure?')) {
-            let url = "{{ route('cost.delete', ['id' => ':id']) }}".replace(':id', id);
-            $.ajax({
-                url: url,
-                type: 'DELETE',
-                data: {
-                    _token: "{{ csrf_token() }}"
-                },
-                success: function() {
-                    $('#row-' + id).remove();
-                }
-            });
-        }
+
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+
+            if (result.isConfirmed) {
+
+                let url = "{{ route('cost.delete', ['id' => ':id']) }}".replace(':id', id);
+
+                $.ajax({
+                    url: url,
+                    type: 'DELETE',
+                    data: {
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function() {
+
+                        $('#row-' + id).remove();
+
+                        Swal.fire(
+                            'Deleted!',
+                            'Cost has been deleted.',
+                            'success'
+                        );
+                    },
+                    error: function() {
+                        Swal.fire(
+                            'Error!',
+                            'Something went wrong.',
+                            'error'
+                        );
+                    }
+                });
+            }
+        });
     }
 
     function filterCost() {
         let category = $('#filter_category').val();
+        let field = $('#filter_field').val();
         let from = $('#from').val();
         let to = $('#to').val();
         let query = '?';
+
         if (category) query += 'category_id=' + category + '&';
+        if (field) query += 'field_id=' + field + '&';
         if (from && to) query += 'from=' + from + '&to=' + to + '&';
+
         window.location.href = "{{ route('cost.index') }}" + query.slice(0, -1);
     }
 

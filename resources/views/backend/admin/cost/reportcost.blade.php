@@ -24,11 +24,22 @@
     }
 </style>
 <div class="container-fluid">
-    <h4>All Costs</h4>
+    <h4>All Expenses</h4>
 
     <!-- Filter Form -->
     <div class="mb-3">
         <div class="row g-2 align-items-end">
+
+
+            <div class="col-md-2">
+                <label class="form-label">From</label>
+                <input type="date" id="from" class="form-control">
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">To</label>
+                <input type="date" id="to" class="form-control">
+            </div>
 
             <div class="col-md-2">
                 <label class="form-label">Category</label>
@@ -60,20 +71,18 @@
                 </select>
             </div>
 
-            <div class="col-md-2">
-                <label class="form-label">From</label>
-                <input type="date" id="from" class="form-control">
-            </div>
 
-            <div class="col-md-2">
-                <label class="form-label">To</label>
-                <input type="date" id="to" class="form-control">
-            </div>
 
             <div class="col-md-2 d-grid">
                 <label class="form-label invisible">Filter</label>
-                <button class="btn btn-info" onclick="filterCost()">
+                <button class="btn btn-success" onclick="filterCost()">
                     Filter
+                </button>
+            </div>
+
+            <div class="mt-3">
+                <button class="btn btn-primary" onclick="printReport()">
+                    Print Report
                 </button>
             </div>
 
@@ -181,6 +190,37 @@
             });
             $('#cost_field_id').html(options);
         });
+    }
+</script>
+
+<script>
+    function printReport() {
+        // Table er HTML niye print korbo
+        let printContents = document.querySelector('.table-responsive').innerHTML;
+        let originalContents = document.body.innerHTML;
+
+        document.body.innerHTML = `
+        <html>
+        <head>
+            <title>Expense Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #000; padding: 8px; text-align: center; }
+                th { background-color: #f0f0f0; }
+                tfoot th { text-align: right; }
+            </style>
+        </head>
+        <body>
+            <h3>Expense Report</h3>
+            ${printContents}
+        </body>
+        </html>
+    `;
+
+        window.print(); // print dialog open
+        document.body.innerHTML = originalContents; // page restore
+        location.reload(); // optional, reload page to restore JS functionality
     }
 </script>
 @endpush
